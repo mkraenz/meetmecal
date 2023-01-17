@@ -1,0 +1,222 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  meetmecal
+
+  Sample SAM Template for MeetMeCal
+
+Parameters:
+  Stage:
+    Type: String
+    Description: Stage name for the API
+    Default: Dev
+  BookingConfirmationMailSmtpHost:
+    Type: String
+  BookingConfirmationMailSmtpUsername:
+    Type: String
+  BookingConfirmationMailSmtpPassword:
+    Type: String
+  BookingConfirmationMailSmtpPort:
+    Type: String
+    Default: 465
+  BookingConfirmationMailUseSsl:
+    Type: String
+    Default: "true"
+  BookingConfirmationMailMyEmailAddress:
+    Type: String
+  BookingConfirmationMailFromAddress:
+    Type: String
+  # Workaround: --parameter-overrides forbids having whitespace in a parameter
+  BookingConfirmationMailMyFirstName:
+    Type: String
+  BookingConfirmationMailMyLastName:
+    Type: String
+
+Resources:
+  # using single table design. See README.md for the design.
+  DbTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${AWS::StackName}-${AWS::Region}-${Stage}-db
+      AttributeDefinitions:
+        - AttributeName: pk # partition key
+          AttributeType: S
+        - AttributeName: sk # sort key
+          AttributeType: S
+        - AttributeName: gs1pk # global secondary index partition key
+          AttributeType: S
+        - AttributeName: gs1sk # global secondary index sort key
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      GlobalSecondaryIndexes:
+        - IndexName: reversekeyindex
+          KeySchema:
+            - AttributeName: sk
+              KeyType: HASH
+            - AttributeName: pk
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+        - IndexName: gs1
+          KeySchema:
+            - AttributeName: gs1pk
+              KeyType: HASH
+            - AttributeName: gs1sk
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+      StreamSpecification:
+        # NEW_ITEM = The entire item after modification, is written to the stream.
+        StreamViewType: NEW_IMAGE
+
+  NextjsToDynamoDBUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Sub ${AWS::StackName}-${AWS::Region}-${Stage}-nextjs-to-dynamodb
+      Policies:
+        - PolicyName: NextjsToDynamoDBPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: CrudDynamodb
+                Effect: Allow
+                Action:
+                  - dynamodb:putItem
+                  - dynamodb:getItem
+                  - dynamodb:updateItem
+                  - dynamodb:deleteItem
+                  - dynamodb:query
+                Resource:
+                  - !GetAtt DbTable.Arn
+                  - !Sub ${DbTable.Arn}/index/*
+
+  NextjsToDynamoDBUserAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      Serial: 1
+      Status: Active
+      UserName: !Ref NextjsToDynamoDBUser
+
+  ############################################################
+  # Email notifications sending via Lambda triggered by DynamoDB Stream events on booking creation (with EventBridge Pipe as transport)
+  ############################################################
+  # EventBus:
+  #   Type: AWS::Events::EventBus
+  #   Properties:
+  #     Name: !Sub ${AWS::StackName}-${AWS::Region}-${Stage}-bus
+
+  PipeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - pipes.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub ${AWS::StackName}-${AWS::Region}-${Stage}-source-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "dynamodb:DescribeStream"
+                  - "dynamodb:GetRecords"
+                  - "dynamodb:GetShardIterator"
+                  - "dynamodb:ListStreams"
+                Resource: !GetAtt DbTable.StreamArn
+        - PolicyName: !Sub ${AWS::StackName}-${AWS::Region}-${Stage}-target-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "lambda:InvokeFunction"
+                #   - "events:PutEvents"
+                Resource: !GetAtt BookingCreatedFn.Arn
+                # Resource: !GetAtt EventBus.Arn
+
+  BookingCreatedFn:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/
+      Handler: on-booking-created.lambdaHandler
+      Environment:
+        Variables:
+          SMTP_HOST: !Sub ${BookingConfirmationMailSmtpHost}
+          SMTP_USERNAME: !Sub ${BookingConfirmationMailSmtpUsername}
+          SMTP_PASSWORD: !Sub ${BookingConfirmationMailSmtpPassword}
+          SMTP_PORT: !Sub ${BookingConfirmationMailSmtpPort}
+          USE_SSL: !Sub ${BookingConfirmationMailUseSsl}
+          MY_EMAIL_ADDRESS: !Sub ${BookingConfirmationMailMyEmailAddress}
+          FROM_ADDRESS: !Sub ${BookingConfirmationMailFromAddress}
+          MY_NAME: !Sub ${BookingConfirmationMailMyFirstName} ${BookingConfirmationMailMyLastName}
+      Runtime: nodejs16.x
+      Architectures:
+        - x86_64
+    Metadata: # Manage esbuild properties
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        # Sourcemap: true # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
+        EntryPoints:
+          - on-booking-created.ts
+
+  # EventBridge Pipe to listen to all created items in DDB table
+  BookingCreatedPipe:
+    Type: AWS::Pipes::Pipe
+    Properties:
+      Name: !Sub ${AWS::StackName}-${AWS::Region}-${Stage}-booking-created
+      Description: "Pipes to connect to DDB stream listening only for creation changes"
+      RoleArn: !GetAtt PipeRole.Arn
+      Source: !GetAtt DbTable.StreamArn
+      SourceParameters:
+        FilterCriteria:
+          Filters:
+            # pattern derived from https://docs.aws.amazon.com/lambda/latest/dg/with-ddb-example.html
+            # pk = "booking" comes from db.ts
+            # Note: in eventbridge we must use `"S": ["booking"]` for equality match even though we want to match for `"S": "booking"`. See https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html
+            # For whatever reason we cannot use multiline here
+            - Pattern: '{"eventName":["INSERT"],"dynamodb":{"NewImage":{"pk":{"S":["booking"]}}}}'
+        DynamoDBStreamParameters:
+          StartingPosition: LATEST
+          BatchSize: 1
+          # DeadLetterConfig:
+          #   Arn: !GetAtt PipeDLQueue.Arn
+      # Target: !GetAtt EventBus.Arn
+      Target: !GetAtt BookingCreatedFn.Arn
+      TargetParameters:
+        LambdaFunctionParameters:
+          InvocationType: FIRE_AND_FORGET
+
+Outputs:
+  AccessKeyId:
+    Value: !Ref NextjsToDynamoDBUserAccessKey
+  AccessKeySecret:
+    Value: !GetAtt NextjsToDynamoDBUserAccessKey.SecretAccessKey
+  TableName:
+    Value: !Ref DbTable
+  UserName:
+    Value: !Ref NextjsToDynamoDBUser
+  BookingCreatedPipeName:
+    Value: !Ref BookingCreatedPipe
+  BookingCreatedFnName:
+    Value: !Ref BookingCreatedFn

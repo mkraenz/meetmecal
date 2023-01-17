@@ -1,0 +1,13 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "meetmecal"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-1fjvpoyowea47"
+s3_prefix = "meetmecal"
+region = "eu-central-1"
+profile = "mirco"
+confirm_changeset = true
+capabilities = "CAPABILITY_NAMED_IAM"
+parameter_overrides = "Stage=\"Dev\""
+image_repositories = []
