@@ -1,10 +1,10 @@
 import { AvailabilityDb, ContactDb, MeetingTypeDb, TokenDb } from "../../db";
 import { getRandomId } from "../../utils";
 
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const adminRouter = createTRPCRouter({
-  createExampleMeetings: publicProcedure.mutation(async () => {
+  createExampleMeetings: protectedProcedure.mutation(async () => {
     const createPromises = [
       {
         durationInMins: 15,
@@ -33,7 +33,7 @@ export const adminRouter = createTRPCRouter({
     };
   }),
 
-  createExampleAvailabilities: publicProcedure.mutation(async () => {
+  createExampleAvailabilities: protectedProcedure.mutation(async () => {
     const createPromises = [
       {
         start: "2023-01-08T15:45:00.000Z",
@@ -64,7 +64,7 @@ export const adminRouter = createTRPCRouter({
     };
   }),
 
-  createExampleContact: publicProcedure.mutation(async () => {
+  createExampleContact: protectedProcedure.mutation(async () => {
     const contact = await ContactDb.create({
       name: "Test McTesting",
       email: "hello@example.com",

@@ -8,7 +8,8 @@ import BookingConfirmation from "../components/BookingConfirmation";
 import Calendar from "../components/Calendar";
 import Contact from "../components/Contact";
 import MeetingTypeSelector from "../components/MeetingTypeSelector";
-import { env } from "../env/client.mjs";
+import { env as clientEnv } from "../env/client.mjs";
+import { env } from "../env/server.mjs";
 import type { AvailabilityEntity, MeetingTypeEntity } from "../server/db";
 import { AvailabilityDb, MeetingTypeDb } from "../server/db";
 import type { Availability, MeetingType, Slot } from "../state/app.context";
@@ -20,6 +21,7 @@ const MAX_WHILE_LOOPS = 50;
 interface Props {
   meetingTypes: MeetingType[];
   availabilies: Availability[];
+  headTitle: string;
 }
 
 const Home: NextPage<Props> = (props) => {
@@ -63,17 +65,17 @@ const Home: NextPage<Props> = (props) => {
     <>
       <Head>
         {/* TODO Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering */}
-        <title>Meet {env.NEXT_PUBLIC_MY_FIRST_NAME}</title>
+        <title>{props.headTitle}</title>
         <meta
           name="description"
-          content={`Book a meeting with ${env.NEXT_PUBLIC_MY_FIRST_NAME}`}
+          content={`Book a meeting with ${clientEnv.NEXT_PUBLIC_MY_FIRST_NAME}`}
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <VStack as="main" pt={20} gap={4}>
         <VStack pb={10}>
           <Heading as="h1" size={"xl"}>
-            {env.NEXT_PUBLIC_MY_NAME}
+            {clientEnv.NEXT_PUBLIC_MY_NAME}
           </Heading>
           <Heading as="h2" size={"md"} textColor={subheadingColor}>
             TypeScript Software Product Developer
@@ -121,7 +123,13 @@ export const getServerSideProps: GetServerSideProps<Props> = async (
     meetingTypes: meetingTypes.map(MeetingTypeDto.from),
     availabilies: availabilities.map(AvailabilityDto.from),
   };
-  return { props: data };
+  return {
+    props: {
+      ...data,
+      // injecting head title for SSR. Otherwise title flickers + warning in console
+      headTitle: `Meet ${env.MY_FIRST_NAME}`,
+    },
+  };
 };
 
 export default Home;
