@@ -7,9 +7,10 @@ import { getRandomId } from "./utils";
 const client = new Dynamo({
   client: new DynamoDBClient({
     credentials: {
-      accessKeyId: env.AWS_USER_ACCESS_KEY_ID,
-      secretAccessKey: env.AWS_USER_ACCESS_KEY_SECRET,
+      accessKeyId: env.MY_AWS_USER_ACCESS_KEY_ID,
+      secretAccessKey: env.MY_AWS_USER_ACCESS_KEY_SECRET,
     },
+    region: env.MY_AWS_REGION,
   }),
 });
 
@@ -144,7 +145,7 @@ export type BookingEntity = Entity<typeof meetMeCalOneSchema.models.Booking>;
 
 export const myonetable = new Table({
   client: client,
-  name: env.AWS_DYNAMODB_TABLE_NAME,
+  name: env.MY_AWS_DYNAMODB_TABLE_NAME,
   schema: meetMeCalOneSchema,
   isoDates: true,
   partial: true,

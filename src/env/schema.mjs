@@ -22,9 +22,10 @@ export const serverSchema = z.object({
   DISCORD_CLIENT_SECRET: z.string(),
   BACKEND_BASE_URL: z.string().url(),
   MY_FIRST_NAME: z.string(),
-  AWS_USER_ACCESS_KEY_ID: z.string(),
-  AWS_USER_ACCESS_KEY_SECRET: z.string(),
-  AWS_DYNAMODB_TABLE_NAME: z.string(),
+  MY_AWS_USER_ACCESS_KEY_ID: z.string(),
+  MY_AWS_USER_ACCESS_KEY_SECRET: z.string(),
+  MY_AWS_DYNAMODB_TABLE_NAME: z.string(),
+  MY_AWS_REGION: z.string(),
 });
 
 /**
