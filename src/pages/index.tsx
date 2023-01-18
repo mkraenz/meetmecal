@@ -70,12 +70,6 @@ const Home: NextPage<Props> = (props) => {
           name="description"
           content={`Book a meeting with ${clientEnv.NEXT_PUBLIC_MY_FIRST_NAME}`}
         />
-        {/* Fixes mobile not in full width https://stackoverflow.com/questions/67747138/next-js-app-with-chakra-ui-not-full-width-on-mobile-devices#comment119748948_67747138 */}
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1"
-        ></meta>
-        <link rel="icon" href="/favicon.ico" />
       </Head>
       <VStack as="main" pt={20} gap={4}>
         <VStack pb={10}>
@@ -83,7 +77,7 @@ const Home: NextPage<Props> = (props) => {
             {clientEnv.NEXT_PUBLIC_MY_NAME}
           </Heading>
           <Heading as="h2" size={"md"} textColor={subheadingColor}>
-            TypeScript Software Product Developer
+            TypeScript Software Product Engineer
           </Heading>
         </VStack>
         <MeetingTypeSelector
