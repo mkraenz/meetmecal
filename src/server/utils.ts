@@ -14,3 +14,5 @@ export const isValidDateString = (dateString: string) =>
   !isNaN(new Date(dateString).getTime());
 export const isInPast = (date: Date | string) =>
   date instanceof Date ? date < new Date() : new Date(date) < new Date();
+
+export const dateToSeconds = (date: Date) => Math.floor(date.getTime() / 1000);

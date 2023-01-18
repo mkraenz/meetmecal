@@ -32,7 +32,6 @@ const Admin: NextPage<Props> = (props) => {
           name="description"
           content={`Book a meeting with ${env.NEXT_PUBLIC_MY_FIRST_NAME}`}
         />
-        <link rel="icon" href="/favicon.ico" />
       </Head>
       <VStack as="main" pt={20} gap={4}>
         <Button onClick={seedMeetingTypes}>Seed Meeting Types</Button>

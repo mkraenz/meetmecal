@@ -11,18 +11,21 @@ export const formatDate = (slot: Slot) => {
   }).format(slot.start);
 };
 
-export const formatDateOnly = (date: Date) => {
+export const formatDateOnly = (date: Date | string) => {
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "full",
-  }).format(date);
+  }).format(toDate(date));
 };
 
-export const formatTime = (date: Date) => {
+export const formatTime = (date: Date | string) => {
   return new Intl.DateTimeFormat(undefined, {
     timeStyle: "short",
-  }).format(date);
+  }).format(toDate(date));
 };
 
 export const formatTimezone = () => {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 };
+
+const toDate = (date: Date | string) =>
+  typeof date === "string" ? new Date(date) : date;
