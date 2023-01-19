@@ -1,4 +1,4 @@
-import { CalendarIcon } from "@chakra-ui/icons";
+import { AddIcon } from "@chakra-ui/icons";
 import { Button, Heading, HStack, VStack } from "@chakra-ui/react";
 import type { FC } from "react";
 import { useState } from "react";
@@ -63,7 +63,7 @@ const AddAvailability: FC<Props> = () => {
         <Button
           variant="solid"
           ml={4}
-          leftIcon={<CalendarIcon />}
+          leftIcon={<AddIcon />}
           onClick={onSubmit}
           isLoading={create.isLoading || availabilities.isLoading}
         >
