@@ -1,5 +1,6 @@
 import { adminRouter } from "./routers/admin";
 import { availabilitiesAdminRouter } from "./routers/admin/availabilities";
+import { bookingsAdminRouter } from "./routers/admin/bookings";
 import { bookingRouter } from "./routers/bookings";
 import { exampleRouter } from "./routers/example";
 import { createTRPCRouter } from "./trpc";
@@ -14,6 +15,7 @@ export const appRouter = createTRPCRouter({
   bookings: bookingRouter,
   admin: adminRouter,
   availabilitiesAdmin: availabilitiesAdminRouter,
+  bookingsAdmin: bookingsAdminRouter,
 });
 
 // export type definition of API
