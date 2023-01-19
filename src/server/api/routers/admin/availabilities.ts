@@ -31,4 +31,20 @@ export const availabilitiesAdminRouter = createTRPCRouter({
       end: av.end.toISOString(),
     }));
   }),
+  remove: protectedProcedure
+    .input(z.object({ end: z.string() }))
+    .mutation(async ({ input }) => {
+      const { end } = input;
+      const endInSecs = dateToSeconds(end);
+      await AvailabilityDb.remove(
+        {
+          pk: "availability",
+          sk: `availability#${endInSecs}`,
+        },
+        {
+          exists: true, // remove will throw if value does not exist
+        }
+      );
+      return { success: true };
+    }),
 });

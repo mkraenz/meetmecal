@@ -1,4 +1,6 @@
+import { DeleteIcon } from "@chakra-ui/icons";
 import {
+  IconButton,
   Skeleton,
   Table,
   TableContainer,
@@ -19,7 +21,12 @@ interface Props {}
 
 const AvailabilitiesAdmin: NextPage<Props> = (props) => {
   const availabilities = api.availabilitiesAdmin.getAll.useQuery();
+  const removeAvailability = api.availabilitiesAdmin.remove.useMutation();
 
+  const deleteAvailability = async (end: string) => {
+    await removeAvailability.mutateAsync({ end });
+    await availabilities.refetch();
+  };
   return (
     <>
       <Head>
@@ -39,6 +46,7 @@ const AvailabilitiesAdmin: NextPage<Props> = (props) => {
                   <Th>Date</Th>
                   <Th>From</Th>
                   <Th>To</Th>
+                  <Th>Delete</Th>
                 </Tr>
               </Thead>
               <Tbody>
@@ -47,6 +55,13 @@ const AvailabilitiesAdmin: NextPage<Props> = (props) => {
                     <Td>{formatDateOnly(start)}</Td>
                     <Td>{formatTime(start)}</Td>
                     <Td>{formatTime(end)}</Td>
+                    <Td>
+                      <IconButton
+                        icon={<DeleteIcon />}
+                        aria-label="Delete availability"
+                        onClick={() => deleteAvailability(end)}
+                      ></IconButton>
+                    </Td>
                   </Tr>
                 ))}
               </Tbody>

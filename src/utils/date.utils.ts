@@ -27,5 +27,4 @@ export const formatTimezone = () => {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 };
 
-const toDate = (date: Date | string) =>
-  typeof date === "string" ? new Date(date) : date;
+const toDate = (date: Date | string) => new Date(date);
