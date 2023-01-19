@@ -3,7 +3,7 @@ import type { Entity, OneSchema } from "dynamodb-onetable";
 import { Table } from "dynamodb-onetable";
 import { Dynamo } from "dynamodb-onetable/Dynamo";
 import { env } from "../env/server.mjs";
-import { getRandomId } from "./utils";
+import { dateToSeconds, getRandomId } from "./utils";
 const client = new Dynamo({
   client: new DynamoDBClient({
     credentials: {
@@ -37,11 +37,11 @@ const meetMeCalOneSchema = {
     /** availabilities are immutable */
     Availability: {
       pk: { type: String, value: "availability" },
-      sk: { type: String, value: "availability#${endInSecs}" },
+      sk: { type: String, value: "availability#${ttl}" },
       start: { type: Date, required: true },
       end: { type: Date, required: true },
-      /** needed for using DynamoDB TTL */
-      endInSecs: { type: Number, ttl: true, required: true },
+      /** Equal to `end` but as number of seconds since Epoch. Using DynamoDB TTL */
+      ttl: { type: Number, ttl: true, required: true },
     },
     MeetingType: {
       pk: { type: String, value: "meetingtype" },
@@ -112,14 +112,22 @@ const meetMeCalOneSchema = {
         required: true,
         encode: ["gs1pk", "#", 1 as unknown as string],
       },
-      /** uses dynamodb TTL
+      /**
+       * identical to `exp` field. duplicated and named ttl because DynamoDB can only have one time-to-live field per table.
+       * uses dynamodb TTL
        * Note: DynamoDB TTL is not immediate but can take up to 42 hours
        * @see https://aws.amazon.com/premiumsupport/knowledge-center/ttl-dynamodb/
        */
-      expiry: {
+      ttl: {
         type: Number,
         ttl: true, // @see https://aws.amazon.com/premiumsupport/knowledge-center/ttl-dynamodb/
-        default: () => Math.floor(Date.now() / 1000) + twoWeeksInSecs,
+        default: () => dateToSeconds(new Date()) + twoWeeksInSecs,
+        required: true,
+      },
+      // Number of seconds since epoch, following JWT exp field https://www.rfc-editor.org/rfc/rfc7519#section-2 4.1.4.
+      exp: {
+        type: Number,
+        default: () => dateToSeconds(new Date()) + twoWeeksInSecs,
         required: true,
       },
       value: {

@@ -78,6 +78,9 @@ Resources:
           ProvisionedThroughput:
             ReadCapacityUnits: 1
             WriteCapacityUnits: 1
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
       StreamSpecification:
         # NEW_ITEM = The entire item after modification, is written to the stream.
         StreamViewType: NEW_IMAGE

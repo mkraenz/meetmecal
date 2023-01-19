@@ -2,7 +2,7 @@ import { z } from "zod";
 import { AvailabilityDb } from "../../../db";
 import { dateToSeconds } from "../../../utils";
 
-import { createTRPCRouter, protectedProcedure } from "../../trpc";
+import { createTRPCRouter, publicProcedure } from "../../trpc";
 
 const createValidator = z.object({
   start: z.string().datetime(),
@@ -10,28 +10,26 @@ const createValidator = z.object({
 });
 
 export const availabilitiesAdminRouter = createTRPCRouter({
-  create: protectedProcedure
-    .input(createValidator)
-    .mutation(async ({ input }) => {
-      const end = new Date(input.end);
-      const availability = await AvailabilityDb.create({
-        start: new Date(input.start),
-        end,
-        endInSecs: dateToSeconds(end),
-      });
+  create: publicProcedure.input(createValidator).mutation(async ({ input }) => {
+    const end = new Date(input.end);
+    const availability = await AvailabilityDb.create({
+      start: new Date(input.start),
+      end,
+      ttl: dateToSeconds(end),
+    });
 
-      return {
-        availability,
-      };
-    }),
-  getAll: protectedProcedure.query(async () => {
+    return {
+      availability,
+    };
+  }),
+  getAll: publicProcedure.query(async () => {
     const availabilities = await AvailabilityDb.find({ pk: "availability" });
     return availabilities.map((av) => ({
       start: av.start.toISOString(),
       end: av.end.toISOString(),
     }));
   }),
-  remove: protectedProcedure
+  remove: publicProcedure
     .input(z.object({ end: z.string() }))
     .mutation(async ({ input }) => {
       const { end } = input;

@@ -17,7 +17,7 @@ export const bookingRouter = createTRPCRouter({
     const accessToken = await TokenDb.get({ value: input.token });
     if (!accessToken)
       return { error: 401, message: "Invalid or expired token" };
-    const tokenIsValid = new Date(accessToken.expiry * 1000) < new Date();
+    const tokenIsValid = new Date(accessToken.exp * 1000) < new Date();
     if (tokenIsValid)
       return { error: 401, message: "Invalid or expired token" };
 

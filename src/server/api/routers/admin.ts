@@ -1,5 +1,5 @@
 import { AvailabilityDb, ContactDb, MeetingTypeDb, TokenDb } from "../../db";
-import { getRandomId } from "../../utils";
+import { dateToSeconds, getRandomId } from "../../utils";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -55,7 +55,7 @@ export const adminRouter = createTRPCRouter({
       .map((d) => ({
         start: new Date(d.start),
         end: new Date(d.end),
-        endInSecs: Math.floor(new Date(d.end).getTime() / 1000),
+        ttl: dateToSeconds(d.end),
       }))
       .map((d) => AvailabilityDb.create(d));
     await Promise.all(createPromises);
