@@ -55,7 +55,6 @@ const BookingsAdmin: NextPage<Props> = (props) => {
   const bookings = api.bookingsAdmin.getAll.useQuery();
   const upcomingMeetings =
     bookings.data?.filter((b) => b.end > new Date()) || [];
-  upcomingMeetings.forEach(console.log);
   const pastMeetings = bookings.data?.filter((b) => b.end <= new Date()) || [];
 
   return (

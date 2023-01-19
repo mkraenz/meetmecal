@@ -32,6 +32,15 @@ Parameters:
   BookingConfirmationMailMyLastName:
     Type: String
 
+  AuthCallbackUrl:
+    Type: String
+  AuthLogoutUrl:
+    Type: String
+  AuthUserPoolDomainName:
+    Type: String
+  AdminEmail:
+    Type: String
+
 Resources:
   # using single table design. See README.md for the design.
   DbTable:
@@ -210,6 +219,51 @@ Resources:
         LambdaFunctionParameters:
           InvocationType: FIRE_AND_FORGET
 
+  ############################################################
+  # Authentication
+  # @see https://serverlessland.com/patterns/cognito-user-pool-sam
+  ############################################################
+  CognitoAuthorizerUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: cognito-user-pool-userpool
+
+  CognitoAuthorizerUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      AllowedOAuthFlows:
+        - code
+      GenerateSecret: True
+      AllowedOAuthFlowsUserPoolClient: True
+      AllowedOAuthScopes:
+        - email
+        - openid
+        - profile
+      CallbackURLs:
+        - !Ref AuthCallbackUrl
+      LogoutURLs:
+        - !Ref AuthLogoutUrl
+      ClientName: !Sub ${AWS::StackName}-${AWS::Region}-${Stage}-nextjs-admin-login
+      SupportedIdentityProviders:
+        - COGNITO
+      UserPoolId: !Ref CognitoAuthorizerUserPool
+      PreventUserExistenceErrors: ENABLED
+
+  CognitoAuthorizerUserPoolUser:
+    Type: AWS::Cognito::UserPoolUser
+    Properties:
+      UserAttributes:
+        - Name: email
+          Value: !Ref AdminEmail
+      Username: !Ref AdminEmail
+      UserPoolId: !Ref CognitoAuthorizerUserPool
+
+  CognitoAuthorizerUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Ref AuthUserPoolDomainName
+      UserPoolId: !Ref CognitoAuthorizerUserPool
+
 Outputs:
   AccessKeyId:
     Value: !Ref NextjsToDynamoDBUserAccessKey
@@ -223,3 +277,7 @@ Outputs:
     Value: !Ref BookingCreatedPipe
   BookingCreatedFnName:
     Value: !Ref BookingCreatedFn
+
+  HostedAuthUI:
+    Description: Hosted Authentication UI
+    Value: !Sub "https://${CognitoAuthorizerUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com/login?client_id=${CognitoAuthorizerUserPoolClient}&response_type=code&scope=email+openid+profile&redirect_uri=${AuthCallbackUrl}"

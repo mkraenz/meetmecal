@@ -18,14 +18,15 @@ export const serverSchema = z.object({
     // VERCEL_URL doesn't include `https` so it cant be validated as a URL
     process.env.VERCEL ? z.string() : z.string().url()
   ),
-  DISCORD_CLIENT_ID: z.string(),
-  DISCORD_CLIENT_SECRET: z.string(),
   BACKEND_BASE_URL: z.string().url(),
   MY_FIRST_NAME: z.string(),
   MY_AWS_USER_ACCESS_KEY_ID: z.string(),
   MY_AWS_USER_ACCESS_KEY_SECRET: z.string(),
   MY_AWS_DYNAMODB_TABLE_NAME: z.string(),
   MY_AWS_REGION: z.string(),
+  MY_AWS_COGNITO_CLIENT_ID: z.string(),
+  MY_AWS_COGNITO_CLIENT_SECRET: z.string(),
+  MY_AWS_COGNITO_ISSUER: z.string().url(),
 });
 
 /**

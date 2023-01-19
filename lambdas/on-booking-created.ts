@@ -24,7 +24,6 @@ export const lambdaHandler = async (
     const event = rawEvent[0];
     // @see https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/modules/_aws_sdk_util_dynamodb.html
     const booking = unmarshall(event.dynamodb.NewImage) as Booking; // TODO validate that its a Booking
-    console.log(JSON.stringify(booking, null, 2));
 
     const cfg = await getEmailConfig();
     const emailToGuest = getEmail(booking, cfg, booking.contact.email);

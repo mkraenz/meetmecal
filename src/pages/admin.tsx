@@ -1,5 +1,6 @@
-import { Button, VStack } from "@chakra-ui/react";
+import { Button, CircularProgress, Link, Text, VStack } from "@chakra-ui/react";
 import { type NextPage } from "next";
+import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { env } from "../env/client.mjs";
 import { api } from "../utils/api";
@@ -7,6 +8,12 @@ import { api } from "../utils/api";
 interface Props {}
 
 const Admin: NextPage<Props> = (props) => {
+  const session = useSession({
+    required: true,
+    onUnauthenticated() {
+      location.href = "/api/auth/signin";
+    },
+  });
   const createMeetings = api.admin.createExampleMeetings.useMutation();
   const createAvailabilities =
     api.admin.createExampleAvailabilities.useMutation();
@@ -24,6 +31,16 @@ const Admin: NextPage<Props> = (props) => {
     await createContactAndToken.mutateAsync();
     alert("Contact and Token created");
   };
+
+  if (session.status === "loading") {
+    return (
+      <VStack mt={20}>
+        <Text>Loading or you may not be signed in...</Text>
+        <CircularProgress isIndeterminate color="brand.500" />
+      </VStack>
+    );
+  }
+
   return (
     <>
       <Head>
@@ -37,7 +54,11 @@ const Admin: NextPage<Props> = (props) => {
         <Button onClick={seedMeetingTypes}>Seed Meeting Types</Button>
         <Button onClick={seedAvailabilities}>Seed Availabilities</Button>
         <Button onClick={seedContactAndToken}>Seed Contact and Token</Button>
+        <Button>
+          <Link href="/api/auth/signout">Sign Out</Link>
+        </Button>
       </VStack>
+      <pre>{JSON.stringify(session, null, 2)}</pre>
     </>
   );
 };
