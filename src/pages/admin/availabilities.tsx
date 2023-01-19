@@ -23,9 +23,14 @@ const AvailabilitiesAdmin: NextPage<Props> = (props) => {
   const availabilities = api.availabilitiesAdmin.getAll.useQuery();
   const removeAvailability = api.availabilitiesAdmin.remove.useMutation();
 
-  const deleteAvailability = async (end: string) => {
-    await removeAvailability.mutateAsync({ end });
-    await availabilities.refetch();
+  const deleteAvailability = (end: string) => {
+    removeAvailability.mutate(
+      { end },
+      {
+        onSuccess: () => availabilities.refetch(),
+        onError: () => alert("This didn't work as expected. Please try again."),
+      }
+    );
   };
   return (
     <>
@@ -67,7 +72,6 @@ const AvailabilitiesAdmin: NextPage<Props> = (props) => {
               </Tbody>
             </Table>
           </TableContainer>
-          {/* <Button onClick={availabilities}>Seed Meeting Types</Button> */}
         </Skeleton>
         <AddAvailability />
       </VStack>

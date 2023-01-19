@@ -10,21 +10,22 @@ import "react-datepicker/dist/react-datepicker.css";
 
 interface Props {}
 
-type FormValues = {
-  start: string;
-  end: string;
-};
-
-const AddAvailability: FC<Props> = (props) => {
+const AddAvailability: FC<Props> = () => {
+  const availabilities = api.availabilitiesAdmin.getAll.useQuery();
   const create = api.availabilitiesAdmin.create.useMutation();
   const [start, setStart] = useState(new Date());
   const [end, setEnd] = useState(new Date());
 
-  const onSubmit = async () => {
-    await create.mutateAsync({
-      start: start.toISOString(),
-      end: end.toISOString(),
-    });
+  const onSubmit = () => {
+    create.mutate(
+      {
+        start: start.toISOString(),
+        end: end.toISOString(),
+      },
+      {
+        onSuccess: () => availabilities.refetch(),
+      }
+    );
   };
 
   return (
@@ -32,8 +33,8 @@ const AddAvailability: FC<Props> = (props) => {
       <Heading size="md">Add Availability</Heading>
       <DatePicker
         selected={start}
-        onChange={(x) => {
-          if (x) setStart(x);
+        onChange={(date) => {
+          if (date) setStart(date);
         }}
         showTimeSelect
         dateFormat="MMMM d, yyyy h:mm aa"
@@ -41,11 +42,20 @@ const AddAvailability: FC<Props> = (props) => {
       />
       <DatePicker
         selected={end}
-        onChange={(x) => {
-          if (x) setEnd(x);
+        onChange={(date) => {
+          if (!date) return;
+          // time-only picker only returns today's date + selected time. need to convert to the
+          const endTimeAtStartDate = `${start.toISOString().slice(0, 11)}${date
+            .toISOString()
+            .slice(11)}`;
+          setEnd(new Date(endTimeAtStartDate));
         }}
         showTimeSelect
-        dateFormat="MMMM d, yyyy h:mm aa"
+        showTimeSelectOnly
+        timeIntervals={30}
+        timeFormat="h:mm aa"
+        timeCaption="Time"
+        dateFormat="h:mm aa"
         minDate={new Date()}
       />
 
@@ -55,6 +65,7 @@ const AddAvailability: FC<Props> = (props) => {
           ml={4}
           leftIcon={<CalendarIcon />}
           onClick={onSubmit}
+          isLoading={create.isLoading || availabilities.isLoading}
         >
           Add
         </Button>
