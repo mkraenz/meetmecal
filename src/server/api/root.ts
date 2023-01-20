@@ -3,7 +3,6 @@ import { availabilitiesAdminRouter } from "./routers/admin/availabilities";
 import { bookingsAdminRouter } from "./routers/admin/bookings";
 import { contactsAdminRouter } from "./routers/admin/contacts";
 import { bookingRouter } from "./routers/bookings";
-import { exampleRouter } from "./routers/example";
 import { createTRPCRouter } from "./trpc";
 
 /**
@@ -12,7 +11,6 @@ import { createTRPCRouter } from "./trpc";
  * All routers added in /api/routers should be manually added here
  */
 export const appRouter = createTRPCRouter({
-  example: exampleRouter,
   bookings: bookingRouter,
   admin: adminRouter,
   availabilitiesAdmin: availabilitiesAdminRouter,
