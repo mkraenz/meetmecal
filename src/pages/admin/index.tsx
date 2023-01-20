@@ -2,10 +2,10 @@ import { Button, VStack } from "@chakra-ui/react";
 import { type NextPage } from "next";
 import { signOut } from "next-auth/react";
 import Head from "next/head";
-import AdminLoadingIndicator from "../components/admin/AdminLoadingIndicator.jsx";
-import useAdminSession from "../components/admin/useAdminSession.jsx";
-import { env } from "../env/client.mjs";
-import { api } from "../utils/api";
+import AdminLoadingIndicator from "../../components/admin/AdminLoadingIndicator";
+import useAdminSession from "../../components/admin/useAdminSession";
+import { env } from "../../env/client.mjs";
+import { api } from "../../utils/api";
 
 interface Props {}
 

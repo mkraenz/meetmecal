@@ -30,9 +30,7 @@ const ContactsAdmin: NextPage<Props> = (props) => {
     remove.mutate({ id }, { onSuccess: () => contacts.refetch() });
   };
 
-  if (session.status === "loading") {
-    return <AdminLoadingIndicator />;
-  }
+  if (session.status === "loading") return <AdminLoadingIndicator />;
   return (
     <>
       <Head>

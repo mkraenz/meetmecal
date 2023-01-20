@@ -11,6 +11,7 @@ import { type NextPage } from "next";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import type { FC } from "react";
+import AdminLoadingIndicator from "../../components/admin/AdminLoadingIndicator";
 import useAdminSession from "../../components/admin/useAdminSession";
 import type { BookingEntity } from "../../server/db";
 import { api } from "../../utils/api";
@@ -21,6 +22,9 @@ interface Props {}
 const Booking: FC<{ booking: BookingEntity }> = ({ booking }) => {
   const session = useSession();
   console.log(session.status);
+
+  if (session.status === "loading") return <AdminLoadingIndicator />;
+
   return (
     <VStack
       key={booking.start.toISOString()}
