@@ -61,13 +61,13 @@ const MyApp: AppType<{ session: Session | null }> = ({
           content="width=device-width, initial-scale=1"
         ></meta>
       </Head>
-      <AppStateProvider>
-        <SessionProvider session={session}>
+      <SessionProvider session={session}>
+        <AppStateProvider>
           <ChakraProvider theme={theme}>
             <Component {...pageProps} />
           </ChakraProvider>
-        </SessionProvider>
-      </AppStateProvider>
+        </AppStateProvider>
+      </SessionProvider>
     </>
   );
 };

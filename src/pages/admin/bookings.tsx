@@ -8,8 +8,10 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { type NextPage } from "next";
+import { useSession } from "next-auth/react";
 import Head from "next/head";
 import type { FC } from "react";
+import useAdminSession from "../../components/admin/useAdminSession";
 import type { BookingEntity } from "../../server/db";
 import { api } from "../../utils/api";
 import { formatDateOnly, formatTime } from "../../utils/date.utils";
@@ -17,6 +19,8 @@ import { formatDateOnly, formatTime } from "../../utils/date.utils";
 interface Props {}
 
 const Booking: FC<{ booking: BookingEntity }> = ({ booking }) => {
+  const session = useSession();
+  console.log(session.status);
   return (
     <VStack
       key={booking.start.toISOString()}
@@ -52,6 +56,7 @@ const Booking: FC<{ booking: BookingEntity }> = ({ booking }) => {
 };
 
 const BookingsAdmin: NextPage<Props> = (props) => {
+  const session = useAdminSession();
   const bookings = api.bookingsAdmin.getAll.useQuery();
   const upcomingMeetings =
     bookings.data?.filter((b) => b.end > new Date()) || [];

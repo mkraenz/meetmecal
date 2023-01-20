@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ContactDb, TokenDb } from "../../../db";
 import { getRandomId } from "../../../utils";
 
-import { createTRPCRouter, publicProcedure } from "../../trpc";
+import { createTRPCRouter, protectedProcedure } from "../../trpc";
 
 const createValidator = z.object({
   name: z.string().min(4),
@@ -11,23 +11,25 @@ const createValidator = z.object({
 });
 
 export const contactsAdminRouter = createTRPCRouter({
-  getAll: publicProcedure.query(async () => {
+  getAll: protectedProcedure.query(async () => {
     const contacts = await ContactDb.find({ pk: "contact" });
     return contacts;
   }),
   /** creates a contact and a corresponding accesstoken */
-  create: publicProcedure.input(createValidator).mutation(async ({ input }) => {
-    const contact = await ContactDb.create({
-      name: input.name,
-      email: input.email,
-    });
-    const token = await TokenDb.create({
-      contactId: contact.id,
-      value: getRandomId(60),
-    });
-    return { contact, token };
-  }),
-  remove: publicProcedure
+  create: protectedProcedure
+    .input(createValidator)
+    .mutation(async ({ input }) => {
+      const contact = await ContactDb.create({
+        name: input.name,
+        email: input.email,
+      });
+      const token = await TokenDb.create({
+        contactId: contact.id,
+        value: getRandomId(60),
+      });
+      return { contact, token };
+    }),
+  remove: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ input }) => {
       const contactId = input.id;

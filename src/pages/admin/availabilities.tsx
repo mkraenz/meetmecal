@@ -14,12 +14,14 @@ import {
 import { type NextPage } from "next";
 import Head from "next/head";
 import AddAvailability from "../../components/admin/availabilities/AddAvailability";
+import useAdminSession from "../../components/admin/useAdminSession";
 import { api } from "../../utils/api";
 import { formatDateOnly, formatTime } from "../../utils/date.utils";
 
 interface Props {}
 
 const AvailabilitiesAdmin: NextPage<Props> = (props) => {
+  const session = useAdminSession();
   const availabilities = api.availabilitiesAdmin.getAll.useQuery();
   const removeAvailability = api.availabilitiesAdmin.remove.useMutation();
 

@@ -4,6 +4,13 @@ import CognitoProvider from "next-auth/providers/cognito";
 import { env } from "../../../env/server.mjs";
 
 export const authOptions: NextAuthOptions = {
+  callbacks: {
+    session({ session, token }) {
+      (session as any).accessToken = token;
+      if (session.user && token.sub) session.user.id = token.sub;
+      return session;
+    },
+  },
   // Configure one or more authentication providers
   providers: [
     CognitoProvider({

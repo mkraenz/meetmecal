@@ -14,12 +14,15 @@ import {
 } from "@chakra-ui/react";
 import { type NextPage } from "next";
 import Head from "next/head";
+import AdminLoadingIndicator from "../../components/admin/AdminLoadingIndicator";
 import AddContact from "../../components/admin/contacts/AddContact";
+import useAdminSession from "../../components/admin/useAdminSession";
 import { api } from "../../utils/api";
 
 interface Props {}
 
 const ContactsAdmin: NextPage<Props> = (props) => {
+  const session = useAdminSession();
   const contacts = api.contactsAdmin.getAll.useQuery();
   const remove = api.contactsAdmin.remove.useMutation();
 
@@ -27,6 +30,9 @@ const ContactsAdmin: NextPage<Props> = (props) => {
     remove.mutate({ id }, { onSuccess: () => contacts.refetch() });
   };
 
+  if (session.status === "loading") {
+    return <AdminLoadingIndicator />;
+  }
   return (
     <>
       <Head>
