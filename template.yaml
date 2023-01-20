@@ -36,6 +36,10 @@ Parameters:
     Type: String
   AuthLogoutUrl:
     Type: String
+  AuthCallbackUrl2:
+    Type: String
+  AuthLogoutUrl2:
+    Type: String
   AuthUserPoolDomainName:
     Type: String
   AdminEmail:
@@ -241,8 +245,10 @@ Resources:
         - profile
       CallbackURLs:
         - !Ref AuthCallbackUrl
+        - !Ref AuthCallbackUrl2
       LogoutURLs:
         - !Ref AuthLogoutUrl
+        - !Ref AuthLogoutUrl2
       ClientName: !Sub ${AWS::StackName}-${AWS::Region}-${Stage}-nextjs-admin-login
       SupportedIdentityProviders:
         - COGNITO
