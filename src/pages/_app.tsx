@@ -22,6 +22,7 @@ const theme = extendTheme(
         500: "#208036",
         900: "#153a24",
       },
+      alternateText: "#333333",
     },
   },
   withDefaultColorScheme({ colorScheme: "brand" }),

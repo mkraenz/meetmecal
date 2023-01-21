@@ -87,6 +87,7 @@ const CalendarAdmin: NextPage<Props> = (props) => {
     }
   };
   const handleSelect = ({ start, end }: DateSelectArg) => {
+    // TODO handle overlapping availabilities (also for move and resize...?) Or maybe handle on backend? Or only on bookers' frontend?
     const confirmed = confirm(
       `Would you like to add an availability from ${start} to ${end}?`
     );
@@ -143,7 +144,6 @@ const CalendarAdmin: NextPage<Props> = (props) => {
             slotMinTime={"09:00:00"} // only show business hours
             slotMaxTime={"20:00:00"}
             slotDuration={"00:15:00"}
-            slotEventOverlap={false}
             validRange={{
               start: new Date(), // only future dates are shown
             }}
@@ -173,7 +173,7 @@ const CalendarAdmin: NextPage<Props> = (props) => {
             ></Button>
           </PopoverTrigger>
           <PopoverContent>
-            <PopoverHeader fontWeight="semibold">
+            <PopoverHeader fontWeight="semibold" textColor={"alternateText"}>
               Delete availability?
             </PopoverHeader>
             <PopoverArrow />
@@ -182,6 +182,7 @@ const CalendarAdmin: NextPage<Props> = (props) => {
               <Button
                 onClick={deleteAvailability}
                 isLoading={removeAvailability.isLoading}
+                bgColor="brand.500"
               >
                 Delete
               </Button>
