@@ -11,7 +11,12 @@ import {
   Stack,
   useDisclosure,
 } from "@chakra-ui/react";
-import type { EventDropArg, EventInput } from "@fullcalendar/core";
+import type {
+  DateSelectArg,
+  EventClickArg,
+  EventDropArg,
+  EventInput,
+} from "@fullcalendar/core";
 import type { EventImpl } from "@fullcalendar/core/internal";
 import type { EventResizeDoneArg } from "@fullcalendar/interaction";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -28,7 +33,7 @@ interface Props {}
 
 const CalendarAdmin: NextPage<Props> = (props) => {
   const session = useAdminSession();
-  const popperShown = useDisclosure({ defaultIsOpen: false });
+  const popperControl = useDisclosure({ defaultIsOpen: false });
   const [popperPos, setPopperPos] = useState({ left: -1000, top: 0 });
   const [selectedEvent, setSelectedEvent] = useState<EventImpl | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -43,7 +48,7 @@ const CalendarAdmin: NextPage<Props> = (props) => {
       {
         onSuccess: () => {
           availabilities.refetch();
-          popperShown.onClose();
+          popperControl.onClose();
         },
         onError: () => alert("This didn't work as expected. Please try again."),
       }
@@ -81,6 +86,33 @@ const CalendarAdmin: NextPage<Props> = (props) => {
       );
     }
   };
+  const handleSelect = ({ start, end }: DateSelectArg) => {
+    const confirmed = confirm(
+      `Would you like to add an availability from ${start} to ${end}?`
+    );
+    if (confirmed) {
+      createAvailability.mutate(
+        {
+          start: start.toISOString(),
+          end: end.toISOString(),
+        },
+        {
+          onSuccess: () => availabilities.refetch(),
+          onError: () =>
+            alert("This didn't work as expected. Please try again."),
+        }
+      );
+    }
+  };
+  const handleEventClick = ({ event, jsEvent }: EventClickArg) => {
+    jsEvent.preventDefault();
+    setPopperPos({
+      left: jsEvent.pageX,
+      top: jsEvent.pageY,
+    });
+    setSelectedEvent(event);
+    buttonRef.current?.click();
+  };
 
   return (
     <>
@@ -106,15 +138,7 @@ const CalendarAdmin: NextPage<Props> = (props) => {
               center: "title",
               right: "",
             }}
-            eventClick={({ event, jsEvent }) => {
-              jsEvent.preventDefault();
-              setPopperPos({
-                left: jsEvent.pageX,
-                top: jsEvent.pageY,
-              });
-              setSelectedEvent(event);
-              buttonRef.current?.click();
-            }}
+            eventClick={handleEventClick}
             hiddenDays={[0, 6]} // hide weekends
             slotMinTime={"09:00:00"} // only show business hours
             slotMaxTime={"20:00:00"}
@@ -132,32 +156,15 @@ const CalendarAdmin: NextPage<Props> = (props) => {
             selectAllow={(selectInfo) =>
               selectInfo.start.getDate() === selectInfo.end.getDate()
             } // only allow selection within one day
-            select={({ start, end }) => {
-              const confirmed = confirm(
-                `Would you like to add an availability from ${start} to ${end}?`
-              );
-              if (confirmed) {
-                createAvailability.mutate(
-                  {
-                    start: start.toISOString(),
-                    end: end.toISOString(),
-                  },
-                  {
-                    onSuccess: () => availabilities.refetch(),
-                    onError: () =>
-                      alert("This didn't work as expected. Please try again."),
-                  }
-                );
-              }
-            }}
+            select={handleSelect}
           />
         </Skeleton>
 
-        <Popover placement="top-start" isOpen={popperShown.isOpen}>
+        <Popover placement="top-start" isOpen={popperControl.isOpen}>
           <PopoverTrigger>
             {/* dirty WORKAROUND: we need some PopoverTrigger as anchor. So we just set this invisible button to the click position, and then programmatically click the button. */}
             <Button
-              onClick={popperShown.onOpen}
+              onClick={popperControl.onOpen}
               ref={buttonRef}
               position={"absolute"}
               top={popperPos.top}
@@ -170,7 +177,7 @@ const CalendarAdmin: NextPage<Props> = (props) => {
               Delete availability?
             </PopoverHeader>
             <PopoverArrow />
-            <PopoverCloseButton />
+            <PopoverCloseButton onClick={popperControl.onClose} />
             <PopoverBody>
               <Button
                 onClick={deleteAvailability}
