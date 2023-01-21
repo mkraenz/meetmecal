@@ -11,8 +11,9 @@ import {
   Stack,
   useDisclosure,
 } from "@chakra-ui/react";
-import type { EventInput } from "@fullcalendar/core";
+import type { EventDropArg, EventInput } from "@fullcalendar/core";
 import type { EventImpl } from "@fullcalendar/core/internal";
+import type { EventResizeDoneArg } from "@fullcalendar/interaction";
 import interactionPlugin from "@fullcalendar/interaction";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -61,6 +62,26 @@ const CalendarAdmin: NextPage<Props> = (props) => {
 
   if (session.status === "loading") return <AdminLoadingIndicator />;
 
+  const handleEventMoveOrResize = ({
+    event,
+    oldEvent,
+  }: EventResizeDoneArg | EventDropArg) => {
+    if (event.start && event.end && oldEvent.end) {
+      moveAvailability.mutate(
+        {
+          start: event.start.toISOString(),
+          end: event.end.toISOString(),
+          oldEnd: oldEvent.end.toISOString(),
+        },
+        {
+          onSuccess: () => availabilities.refetch(),
+          onError: () =>
+            alert("This didn't work as expected. Please try again."),
+        }
+      );
+    }
+  };
+
   return (
     <>
       <Head>
@@ -87,7 +108,6 @@ const CalendarAdmin: NextPage<Props> = (props) => {
             }}
             eventClick={({ event, jsEvent }) => {
               jsEvent.preventDefault();
-              // alert("Coordinates: " + jsEvent.pageX + "," + jsEvent.pageY);
               setPopperPos({
                 left: jsEvent.pageX,
                 top: jsEvent.pageY,
@@ -106,23 +126,12 @@ const CalendarAdmin: NextPage<Props> = (props) => {
             events={events}
             selectable // https://fullcalendar.io/docs/selectable
             editable // https://fullcalendar.io/docs/editable
-            eventDrop={({ event, oldEvent }) => {
-              if (event.start && event.end && oldEvent.end) {
-                moveAvailability.mutate(
-                  {
-                    start: event.start.toISOString(),
-                    end: event.end.toISOString(),
-                    oldEnd: oldEvent.end.toISOString(),
-                  },
-                  {
-                    onSuccess: () => alert("Availability moved!"),
-                    onError: () =>
-                      alert("This didn't work as expected. Please try again."),
-                  }
-                );
-              }
-            }}
+            eventDrop={handleEventMoveOrResize}
+            eventResize={handleEventMoveOrResize}
             dragScroll
+            selectAllow={(selectInfo) =>
+              selectInfo.start.getDate() === selectInfo.end.getDate()
+            } // only allow selection within one day
             select={({ start, end }) => {
               const confirmed = confirm(
                 `Would you like to add an availability from ${start} to ${end}?`
@@ -134,7 +143,7 @@ const CalendarAdmin: NextPage<Props> = (props) => {
                     end: end.toISOString(),
                   },
                   {
-                    onSuccess: () => alert("Availability added!"),
+                    onSuccess: () => availabilities.refetch(),
                     onError: () =>
                       alert("This didn't work as expected. Please try again."),
                   }
@@ -146,6 +155,7 @@ const CalendarAdmin: NextPage<Props> = (props) => {
 
         <Popover placement="top-start" isOpen={popperShown.isOpen}>
           <PopoverTrigger>
+            {/* dirty WORKAROUND: we need some PopoverTrigger as anchor. So we just set this invisible button to the click position, and then programmatically click the button. */}
             <Button
               onClick={popperShown.onOpen}
               ref={buttonRef}
