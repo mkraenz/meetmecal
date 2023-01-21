@@ -53,7 +53,6 @@ const Home: NextPage<Props> = (props) => {
           restInterval.start.plus({ minutes: usedStep }),
           restInterval.end
         );
-        console.log(restInterval.toISO());
       }
 
       return slotsInInterval;
