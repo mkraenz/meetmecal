@@ -9,8 +9,10 @@ import {
   PopoverTrigger,
   Skeleton,
   Stack,
+  useDisclosure,
 } from "@chakra-ui/react";
 import type { EventInput } from "@fullcalendar/core";
+import type { EventImpl } from "@fullcalendar/core/internal";
 import interactionPlugin from "@fullcalendar/interaction";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -25,16 +27,23 @@ interface Props {}
 
 const CalendarAdmin: NextPage<Props> = (props) => {
   const session = useAdminSession();
+  const popperShown = useDisclosure({ defaultIsOpen: false });
   const [popperPos, setPopperPos] = useState({ left: -1000, top: 0 });
+  const [selectedEvent, setSelectedEvent] = useState<EventImpl | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const availabilities = api.availabilitiesAdmin.getAll.useQuery();
   const removeAvailability = api.availabilitiesAdmin.remove.useMutation();
 
-  const deleteAvailability = (end: string) => {
+  const deleteAvailability = () => {
+    const end = selectedEvent?.end;
+    if (!end) return alert("This didn't work as expected. Please try again.");
     removeAvailability.mutate(
-      { end },
+      { end: end.toISOString() },
       {
-        onSuccess: () => availabilities.refetch(),
+        onSuccess: () => {
+          availabilities.refetch();
+          popperShown.onClose();
+        },
         onError: () => alert("This didn't work as expected. Please try again."),
       }
     );
@@ -49,8 +58,6 @@ const CalendarAdmin: NextPage<Props> = (props) => {
       start: availability.start,
       end: availability.end,
     })) || [];
-
-  console.log({ events });
 
   if (session.status === "loading") return <AdminLoadingIndicator />;
 
@@ -78,13 +85,14 @@ const CalendarAdmin: NextPage<Props> = (props) => {
               center: "title",
               right: "",
             }}
-            eventClick={({ jsEvent }) => {
+            eventClick={({ event, jsEvent }) => {
               jsEvent.preventDefault();
               // alert("Coordinates: " + jsEvent.pageX + "," + jsEvent.pageY);
               setPopperPos({
                 left: jsEvent.pageX,
                 top: jsEvent.pageY,
               });
+              setSelectedEvent(event);
               buttonRef.current?.click();
             }}
             hiddenDays={[0, 6]} // hide weekends
@@ -136,29 +144,33 @@ const CalendarAdmin: NextPage<Props> = (props) => {
           />
         </Skeleton>
 
-        {/* <Popover placement="top-start">
+        <Popover placement="top-start" isOpen={popperShown.isOpen}>
           <PopoverTrigger>
             <Button
+              onClick={popperShown.onOpen}
               ref={buttonRef}
               position={"absolute"}
               top={popperPos.top}
               left={popperPos.left}
-              maxW={0}
-              maxH={0}
+              visibility="hidden"
             ></Button>
           </PopoverTrigger>
           <PopoverContent>
             <PopoverHeader fontWeight="semibold">
-              Popover placement
+              Delete availability?
             </PopoverHeader>
             <PopoverArrow />
             <PopoverCloseButton />
             <PopoverBody>
-              Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
-              eiusmod tempor incididunt ut labore et dolore.
+              <Button
+                onClick={deleteAvailability}
+                isLoading={removeAvailability.isLoading}
+              >
+                Delete
+              </Button>
             </PopoverBody>
           </PopoverContent>
-        </Popover> */}
+        </Popover>
       </Stack>
     </>
   );
