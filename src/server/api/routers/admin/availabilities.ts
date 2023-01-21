@@ -4,14 +4,14 @@ import { dateToSeconds } from "../../../utils";
 
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 
-const createValidator = z.object({
-  start: z.string().datetime(),
-  end: z.string().datetime(),
-});
-
 export const availabilitiesAdminRouter = createTRPCRouter({
   create: protectedProcedure
-    .input(createValidator)
+    .input(
+      z.object({
+        start: z.string().datetime(),
+        end: z.string().datetime(),
+      })
+    )
     .mutation(async ({ input }) => {
       const end = new Date(input.end);
       const availability = await AvailabilityDb.create({
@@ -23,6 +23,36 @@ export const availabilitiesAdminRouter = createTRPCRouter({
       return {
         availability,
       };
+    }),
+  move: protectedProcedure
+    .input(
+      z.object({
+        start: z.string().datetime(),
+        end: z.string().datetime(),
+        /** used as identifier of the availability */
+        oldEnd: z.string().datetime(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      // TODO this should be a transaction
+      const end = new Date(input.end);
+      const availability = await AvailabilityDb.create({
+        start: new Date(input.start),
+        end,
+        ttl: dateToSeconds(end),
+      });
+
+      const endInSecs = dateToSeconds(input.oldEnd);
+      await AvailabilityDb.remove(
+        {
+          pk: "availability",
+          sk: `availability#${endInSecs}`,
+        },
+        {
+          exists: true, // remove will throw if value does not exist
+        }
+      );
+      return { success: true };
     }),
   getAll: protectedProcedure.query(async () => {
     const availabilities = await AvailabilityDb.find({ pk: "availability" });
