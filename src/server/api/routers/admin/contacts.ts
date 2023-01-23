@@ -10,6 +10,17 @@ const createValidator = z.object({
   notes: z.string().optional(),
 });
 
+const Logger =
+  ({
+    correlationId,
+    contactId,
+  }: {
+    correlationId: string;
+    contactId: string;
+  }) =>
+  (obj: Record<string, unknown>) =>
+    console.log(JSON.stringify({ ...obj, correlationId, contactId }));
+
 export const contactsAdminRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async () => {
     const contacts = await ContactDb.find({ pk: "contact" });
@@ -33,15 +44,17 @@ export const contactsAdminRouter = createTRPCRouter({
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ input }) => {
       const contactId = input.id;
-      console.log(`deletion request for contact. id: ${contactId}`);
-      console.log(`contact deleted. id: ${contactId}`);
-      console.log(`deleting tokens of contact. contactId: ${contactId}`);
+
+      const correlationId = getRandomId(10);
+      const log = Logger({ correlationId, contactId });
+      log({ msg: "deletion request for contact" });
+      log({ msg: "deleting tokens of contact" });
       const tokens = await TokenDb.find(
         { sk: `token#${contactId}` },
         { index: "reversekeyindex" }
       );
 
-      console.log("found tokens. Starting deletion... . count:", tokens.length);
+      log({ msg: "found tokens. Starting deletion...", count: tokens.length });
       const removePromises = tokens.map((t) => {
         // no batching for now since there is typically only one token per contact
         return TokenDb.remove({
@@ -50,9 +63,9 @@ export const contactsAdminRouter = createTRPCRouter({
         });
       });
       await Promise.all(removePromises);
-      console.log(`deleted tokens of contact. contactId: ${contactId}`);
+      log({ msg: "deleted tokens" });
 
-      console.log(`deleting contact. id: ${contactId}`);
+      log({ msg: "deleting contact..." });
       await ContactDb.remove(
         {
           pk: "contact",
@@ -60,7 +73,7 @@ export const contactsAdminRouter = createTRPCRouter({
         },
         { exists: true }
       );
-      console.log(`contact deleted. id: ${contactId}`);
+      log({ msg: "contact deletion completed" });
       return { success: true };
     }),
 });
