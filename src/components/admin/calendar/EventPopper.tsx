@@ -1,6 +1,5 @@
 import {
   Popover,
-  PopoverArrow,
   PopoverBody,
   PopoverCloseButton,
   PopoverContent,
@@ -54,8 +53,7 @@ const EventPopper: FC<Props> = ({
         <PopoverHeader fontWeight="semibold" textColor={"alternateText"}>
           {eventType === "availability" ? "Delete availability?" : "Booking"}
         </PopoverHeader>
-        <PopoverArrow />
-        <PopoverCloseButton onClick={onClose} />
+        <PopoverCloseButton onClick={onClose} color={"alternateText"} />
         <PopoverBody>
           {eventType === "availability" ? (
             <Button
