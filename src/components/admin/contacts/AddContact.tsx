@@ -42,6 +42,19 @@ const AddContact: FC<Props> = () => {
           const link = `${location.protocol}//${location.host}/?token=${data.token.value}`;
           setInvitationLink(link);
           contacts.refetch();
+          clipboard.setValue(link);
+          clipboard.onCopy();
+          toast({
+            title: "Invitation link copied to clipboard",
+            status: "success",
+          });
+        },
+        onError: (error) => {
+          console.error(error);
+          toast({
+            title: "Something went wrong. Please try again later",
+            status: "error",
+          });
         },
       }
     );
@@ -132,7 +145,8 @@ const AddContact: FC<Props> = () => {
             }}
             contentEditable={"false"}
             id="invitationLink"
-            defaultValue={invitationLink || "add contact to generate link..."}
+            value={invitationLink || "add contact to generate link..."}
+            readOnly
           />
         </FormControl>
         {clipboard.hasCopied ? (
