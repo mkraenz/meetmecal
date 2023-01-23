@@ -11,10 +11,11 @@ import Contact from "../components/Contact";
 import MeetingTypeSelector from "../components/MeetingTypeSelector";
 import { env as clientEnv } from "../env/client.mjs";
 import { env } from "../env/server.mjs";
-import type { AvailabilityEntity, MeetingTypeEntity } from "../server/db";
-import { AvailabilityDb, MeetingTypeDb } from "../server/db";
+import type { MeetingTypeEntity } from "../server/db";
+import { AvailabilityDb, BookingDb, MeetingTypeDb } from "../server/db";
 import type { Availability, MeetingType, Slot } from "../state/app.context";
 import { useAppState } from "../state/app.context";
+import { getAvailabilitiesMinusBookings } from "../utils/getAvailabilitiesMinusBookings";
 
 const MAX_MEETING_INTERVAL_IN_MINS = 30; // e.g. 90 min meeting slots will be calculated as 16:00-17:30, 16:30-18:00, 17:00-18:30 etc. 15 min meeting slots will use 16:00, 16:15, 16:30 etc
 
@@ -105,10 +106,10 @@ class MeetingTypeDto {
 }
 
 class AvailabilityDto {
-  static from(availability: AvailabilityEntity) {
+  static from(availability: Interval) {
     return {
-      start: availability.start.toISOString(),
-      end: availability.end.toISOString(),
+      start: availability.start.toISO(),
+      end: availability.end.toISO(),
     };
   }
 }
@@ -117,12 +118,17 @@ export const getServerSideProps: GetServerSideProps<Props> = async (
   context
 ) => {
   const availabilities = await AvailabilityDb.find({ pk: "availability" });
+  const bookings = await BookingDb.find({ pk: "booking" });
+  const availabiliesMinusBookings = getAvailabilitiesMinusBookings(
+    availabilities,
+    bookings
+  );
   const meetingTypes = await MeetingTypeDb.find({ pk: "meetingtype" });
   // const bookerRes = await fetch(`${env.BACKEND_BASE_URL}/booker`);
   // const bookerData = await bookerRes.json();
   const data = {
     meetingTypes: meetingTypes.map(MeetingTypeDto.from),
-    availabilies: availabilities.map(AvailabilityDto.from),
+    availabilies: availabiliesMinusBookings.map(AvailabilityDto.from),
   };
   return {
     props: {

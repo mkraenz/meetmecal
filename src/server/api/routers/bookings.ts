@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { BookingDb, ContactDb, MeetingTypeDb, TokenDb } from "../../db";
+import { getRandomId } from "../../utils";
 
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
@@ -21,6 +22,8 @@ export const bookingRouter = createTRPCRouter({
     if (tokenIsValid)
       return { error: 401, message: "Invalid or expired token" };
 
+    const correlationId = getRandomId(10);
+    console.log("booking...", { correlationId });
     const contact = await ContactDb.get({ id: accessToken.contactId });
     const meetingType = await MeetingTypeDb.get({ id: input.meetingTypeId });
     if (!meetingType || !contact) return { error: 404 };
@@ -51,6 +54,8 @@ export const bookingRouter = createTRPCRouter({
       email: input.email,
     });
     // TODO send emails via DynamoDB Streams. Every month first 2.5mio stream read units are free
+
+    console.log("booking completed", { correlationId });
     return {
       booking,
     };

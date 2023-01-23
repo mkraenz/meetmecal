@@ -52,7 +52,7 @@ const AddContact: FC<Props> = () => {
         onError: (error) => {
           console.error(error);
           toast({
-            title: "Something went wrong. Please try again later",
+            title: "Something went wrong. Please try again",
             status: "error",
           });
         },

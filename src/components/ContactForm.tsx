@@ -7,6 +7,7 @@ import {
   HStack,
   Input,
   Text,
+  useToast,
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import type { SubmitHandler } from "react-hook-form";
@@ -29,6 +30,7 @@ const ContactForm = () => {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>();
   const book = api.bookings.book.useMutation();
+  const toast = useToast();
 
   const { token } = router.query;
 
@@ -41,14 +43,25 @@ const ContactForm = () => {
     if (typeof token !== "string")
       throw new Error("Invalid token from query string parameter");
 
-    await book.mutateAsync({
-      email: values.email,
-      name: values.name,
-      meetingTypeId: state.meetingType?.id ?? "",
-      slot: state.slot?.start?.toISOString() ?? "",
-      token,
-    });
-    dispatch({ type: "nextStep" });
+    book.mutate(
+      {
+        email: values.email,
+        name: values.name,
+        meetingTypeId: state.meetingType?.id ?? "",
+        slot: state.slot?.start?.toISOString() ?? "",
+        token,
+      },
+      {
+        onSuccess: () => dispatch({ type: "nextStep" }),
+        onError: (err) => {
+          console.error(err);
+          toast({
+            status: "error",
+            title: "Something went wrong. Please try again",
+          });
+        },
+      }
+    );
   };
 
   return (
