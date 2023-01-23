@@ -11,8 +11,8 @@ import Head from "next/head";
 import { AppStateProvider } from "../state/app.context";
 import { api } from "../utils/api";
 
-// TODO temporary workaround for react date picker text. will be removed once I switch to an actual calendar for availabilities
-import "../components/admin/availabilities/AddAvailability.css";
+// . will be removed once I switch to an actual calendar for availabilities
+import "./global-overwrites.css";
 
 const theme = extendTheme(
   {

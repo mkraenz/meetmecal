@@ -1,0 +1,10 @@
+/* WORKAROUND for react date picker text */
+.react-datepicker__input-container input {
+    color: black
+    
+}
+
+.fc-event {
+    /** make full-calendar event text readable */ 
+    font-weight: bold;
+}

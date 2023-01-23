@@ -9,7 +9,9 @@ import {
   PopoverTrigger,
   Skeleton,
   Stack,
+  Text,
   useDisclosure,
+  useToken,
 } from "@chakra-ui/react";
 import type {
   DateSelectArg,
@@ -26,10 +28,14 @@ import { type NextPage } from "next";
 import Head from "next/head";
 import { useRef, useState } from "react";
 import AdminLoadingIndicator from "../../components/admin/AdminLoadingIndicator";
+import EventPopper from "../../components/admin/calendar/EventPopper";
 import useAdminSession from "../../components/admin/useAdminSession";
 import { api } from "../../utils/api";
 
 interface Props {}
+
+const availabilityEventPrefix = "availabilityEvent#" as const;
+const bookingEventPrefix = "bookingEvent#" as const;
 
 const CalendarAdmin: NextPage<Props> = (props) => {
   const session = useAdminSession();
@@ -37,7 +43,9 @@ const CalendarAdmin: NextPage<Props> = (props) => {
   const [popperPos, setPopperPos] = useState({ left: -1000, top: 0 });
   const [selectedEvent, setSelectedEvent] = useState<EventImpl | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const [bookingsBgColor] = useToken("colors", ["red.400"]);
   const availabilities = api.availabilitiesAdmin.getAll.useQuery();
+  const bookings = api.bookingsAdmin.getAll.useQuery();
   const removeAvailability = api.availabilitiesAdmin.remove.useMutation();
 
   const deleteAvailability = () => {
@@ -57,13 +65,19 @@ const CalendarAdmin: NextPage<Props> = (props) => {
   const createAvailability = api.availabilitiesAdmin.create.useMutation();
   const moveAvailability = api.availabilitiesAdmin.move.useMutation();
 
-  const events: EventInput[] =
+  const availabilityEvents: EventInput[] =
     availabilities.data?.map((availability) => ({
-      id: availability.end,
+      id: `${availabilityEventPrefix}${availability.end}`,
       title: "Available",
       start: availability.start,
       end: availability.end,
     })) || [];
+  const bookingEvents = bookings.data?.map((booking) => ({
+    id: `${bookingEventPrefix}${booking.id}`,
+    title: `${booking.meetingType.displayName} @${booking.contact.name}`,
+    start: booking.start,
+    end: booking.end,
+  }));
 
   if (session.status === "loading") return <AdminLoadingIndicator />;
 
@@ -105,12 +119,13 @@ const CalendarAdmin: NextPage<Props> = (props) => {
       );
     }
   };
-  const handleEventClick = ({ event, jsEvent }: EventClickArg) => {
+  const handleEventClick = ({ event, jsEvent, ...rest }: EventClickArg) => {
     jsEvent.preventDefault();
     setPopperPos({
       left: jsEvent.pageX,
       top: jsEvent.pageY,
     });
+    console.log(event, jsEvent, rest);
     setSelectedEvent(event);
     buttonRef.current?.click();
   };
@@ -147,7 +162,15 @@ const CalendarAdmin: NextPage<Props> = (props) => {
             validRange={{
               start: new Date(), // only future dates are shown
             }}
-            events={events}
+            eventSources={[
+              { events: availabilityEvents },
+              {
+                events: bookingEvents,
+                color: bookingsBgColor,
+                durationEditable: false,
+                editable: false,
+              },
+            ]}
             selectable // https://fullcalendar.io/docs/selectable
             editable // https://fullcalendar.io/docs/editable
             eventDrop={handleEventMoveOrResize}
@@ -160,35 +183,20 @@ const CalendarAdmin: NextPage<Props> = (props) => {
           />
         </Skeleton>
 
-        <Popover placement="top-start" isOpen={popperControl.isOpen}>
-          <PopoverTrigger>
-            {/* dirty WORKAROUND: we need some PopoverTrigger as anchor. So we just set this invisible button to the click position, and then programmatically click the button. */}
-            <Button
-              onClick={popperControl.onOpen}
-              ref={buttonRef}
-              position={"absolute"}
-              top={popperPos.top}
-              left={popperPos.left}
-              visibility="hidden"
-            ></Button>
-          </PopoverTrigger>
-          <PopoverContent>
-            <PopoverHeader fontWeight="semibold" textColor={"alternateText"}>
-              Delete availability?
-            </PopoverHeader>
-            <PopoverArrow />
-            <PopoverCloseButton onClick={popperControl.onClose} />
-            <PopoverBody>
-              <Button
-                onClick={deleteAvailability}
-                isLoading={removeAvailability.isLoading}
-                bgColor="brand.500"
-              >
-                Delete
-              </Button>
-            </PopoverBody>
-          </PopoverContent>
-        </Popover>
+        <EventPopper
+          buttonRef={buttonRef}
+          eventType={
+            selectedEvent?.id.startsWith(availabilityEventPrefix)
+              ? "availability"
+              : "booking"
+          }
+          isOpen={popperControl.isOpen}
+          onClose={popperControl.onClose}
+          onAvailabilityEventDelete={deleteAvailability}
+          onOpen={popperControl.onOpen}
+          popperPos={popperPos}
+          availabilityDeleteIsLoading={removeAvailability.isLoading}
+        />
       </Stack>
     </>
   );
