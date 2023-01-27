@@ -13,6 +13,7 @@ import {
 } from "@chakra-ui/react";
 import { type NextPage } from "next";
 import Head from "next/head";
+import AdminLayout from "../../components/admin/AdminLayout";
 import AdminLoadingIndicator from "../../components/admin/AdminLoadingIndicator";
 import AddAvailability from "../../components/admin/availabilities/AddAvailability";
 import useAdminSession from "../../components/admin/useAdminSession";
@@ -39,11 +40,11 @@ const AvailabilitiesAdmin: NextPage<Props> = (props) => {
   if (session.status === "loading") return <AdminLoadingIndicator />;
 
   return (
-    <>
+    <AdminLayout>
       <Head>
         <title>Admin MeetMeCal - Availabilities</title>
       </Head>
-      <VStack as="main" pt={20} gap={4}>
+      <VStack as="main" gap={4}>
         <Skeleton
           isLoaded={!availabilities.isLoading}
           minH="200px"
@@ -81,7 +82,7 @@ const AvailabilitiesAdmin: NextPage<Props> = (props) => {
         </Skeleton>
         <AddAvailability />
       </VStack>
-    </>
+    </AdminLayout>
   );
 };
 

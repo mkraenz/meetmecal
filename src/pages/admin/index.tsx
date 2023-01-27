@@ -2,6 +2,7 @@ import { Button, VStack } from "@chakra-ui/react";
 import { type NextPage } from "next";
 import { signOut } from "next-auth/react";
 import Head from "next/head";
+import AdminLayout from "../../components/admin/AdminLayout";
 import AdminLoadingIndicator from "../../components/admin/AdminLoadingIndicator";
 import useAdminSession from "../../components/admin/useAdminSession";
 import { env } from "../../env/client.mjs";
@@ -34,7 +35,7 @@ const Admin: NextPage<Props> = (props) => {
   }
 
   return (
-    <>
+    <AdminLayout>
       <Head>
         <title>Admin MeetMeCal</title>
         <meta
@@ -49,7 +50,7 @@ const Admin: NextPage<Props> = (props) => {
         <Button onClick={() => signOut()}>Sign Out</Button>
       </VStack>
       <pre>{JSON.stringify(session, null, 2)}</pre>
-    </>
+    </AdminLayout>
   );
 };
 

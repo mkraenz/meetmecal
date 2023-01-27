@@ -14,6 +14,7 @@ import {
 } from "@chakra-ui/react";
 import { type NextPage } from "next";
 import Head from "next/head";
+import AdminLayout from "../../components/admin/AdminLayout";
 import AdminLoadingIndicator from "../../components/admin/AdminLoadingIndicator";
 import AddContact from "../../components/admin/contacts/AddContact";
 import useAdminSession from "../../components/admin/useAdminSession";
@@ -32,7 +33,7 @@ const ContactsAdmin: NextPage<Props> = (props) => {
 
   if (session.status === "loading") return <AdminLoadingIndicator />;
   return (
-    <>
+    <AdminLayout>
       <Head>
         <title>Admin MeetMeCal - Contacts</title>
       </Head>
@@ -87,7 +88,7 @@ const ContactsAdmin: NextPage<Props> = (props) => {
         </Skeleton>
         <AddContact />
       </VStack>
-    </>
+    </AdminLayout>
   );
 };
 

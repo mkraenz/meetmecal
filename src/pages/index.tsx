@@ -2,7 +2,6 @@ import { Heading, useColorModeValue, VStack } from "@chakra-ui/react";
 import { Interval } from "luxon";
 import type { GetServerSideProps } from "next";
 import { type NextPage } from "next";
-import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { useMemo } from "react";
 import BookingConfirmation from "../components/BookingConfirmation";
@@ -27,8 +26,6 @@ interface Props {
 }
 
 const Home: NextPage<Props> = (props) => {
-  const session = useSession();
-
   const subheadingColor = useColorModeValue("gray.300", "gray.300");
   const { state } = useAppState();
 

@@ -1,18 +1,4 @@
-import {
-  Button,
-  Popover,
-  PopoverArrow,
-  PopoverBody,
-  PopoverCloseButton,
-  PopoverContent,
-  PopoverHeader,
-  PopoverTrigger,
-  Skeleton,
-  Stack,
-  Text,
-  useDisclosure,
-  useToken,
-} from "@chakra-ui/react";
+import { Skeleton, Stack, useDisclosure, useToken } from "@chakra-ui/react";
 import type {
   DateSelectArg,
   EventClickArg,
@@ -27,6 +13,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import { type NextPage } from "next";
 import Head from "next/head";
 import { useRef, useState } from "react";
+import AdminLayout from "../../components/admin/AdminLayout";
 import AdminLoadingIndicator from "../../components/admin/AdminLoadingIndicator";
 import EventPopper from "../../components/admin/calendar/EventPopper";
 import useAdminSession from "../../components/admin/useAdminSession";
@@ -131,13 +118,12 @@ const CalendarAdmin: NextPage<Props> = (props) => {
   };
 
   return (
-    <>
+    <AdminLayout>
       <Head>
         <title>Admin MeetMeCal - Availabilities</title>
       </Head>
       <Stack
         as="main"
-        pt={4}
         gap={4}
         minW={"md"}
         maxW={{ lg: "1100px" }}
@@ -198,7 +184,7 @@ const CalendarAdmin: NextPage<Props> = (props) => {
           availabilityDeleteIsLoading={removeAvailability.isLoading}
         />
       </Stack>
-    </>
+    </AdminLayout>
   );
 };
 
