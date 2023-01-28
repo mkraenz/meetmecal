@@ -53,7 +53,7 @@ export const bookingRouter = createTRPCRouter({
       name: input.name,
       email: input.email,
     });
-    // TODO send emails via DynamoDB Streams. Every month first 2.5mio stream read units are free
+    // NOTE: we send emails via DynamoDB Streams. Every month first 2.5mio stream read units are free
 
     console.log("booking completed", { correlationId });
     return {
