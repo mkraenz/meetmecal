@@ -67,7 +67,7 @@ const ContactForm = () => {
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <FormControl isInvalid={!!errors.name}>
-        <FormLabel htmlFor="name" textColor={"gray.300"} mb={1}>
+        <FormLabel htmlFor="name" textColor={"secondaryText"} mb={1}>
           Your name
         </FormLabel>
         <Input
@@ -87,7 +87,7 @@ const ContactForm = () => {
         </FormErrorMessage>
       </FormControl>
       <FormControl isInvalid={!!errors.email} mt={4}>
-        <FormLabel htmlFor="email" textColor={"gray.300"} mb={1}>
+        <FormLabel htmlFor="email" textColor={"secondaryText"} mb={1}>
           Email address
         </FormLabel>
         <Input

@@ -22,6 +22,8 @@ export const bookingRouter = createTRPCRouter({
     if (tokenIsValid)
       return { error: 401, message: "Invalid or expired token" };
 
+    // TODO make sure that the slot is available
+
     const correlationId = getRandomId(10);
     console.log("booking...", { correlationId });
     const contact = await ContactDb.get({ id: accessToken.contactId });

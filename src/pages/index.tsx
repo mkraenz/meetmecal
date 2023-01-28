@@ -1,5 +1,5 @@
 import { Heading, useColorModeValue, VStack } from "@chakra-ui/react";
-import { Interval } from "luxon";
+import { DateTime, Interval } from "luxon";
 import type { GetServerSideProps } from "next";
 import { type NextPage } from "next";
 import Head from "next/head";
@@ -19,6 +19,8 @@ import { getAvailabilitiesMinusBookings } from "../utils/getAvailabilitiesMinusB
 const MAX_MEETING_INTERVAL_IN_MINS = 30; // e.g. 90 min meeting slots will be calculated as 16:00-17:30, 16:30-18:00, 17:00-18:30 etc. 15 min meeting slots will use 16:00, 16:15, 16:30 etc
 
 const MAX_WHILE_LOOPS = 50;
+const NO_MEETINGS_WITHIN_THE_NEXT_N_MINS = 60; // forbid booking a meeting within the next 60 mins
+
 interface Props {
   meetingTypes: MeetingType[];
   availabilies: Availability[];
@@ -26,7 +28,7 @@ interface Props {
 }
 
 const Home: NextPage<Props> = (props) => {
-  const subheadingColor = useColorModeValue("gray.300", "gray.300");
+  const subheadingColor = useColorModeValue("secondaryText", "secondaryText");
   const { state } = useAppState();
 
   const slots = useMemo<Slot[]>(() => {
@@ -116,9 +118,15 @@ export const getServerSideProps: GetServerSideProps<Props> = async (
 ) => {
   const availabilities = await AvailabilityDb.find({ pk: "availability" });
   const bookings = await BookingDb.find({ pk: "booking" });
+  const noMeetingsBefore = DateTime.now()
+    .plus({
+      minutes: NO_MEETINGS_WITHIN_THE_NEXT_N_MINS,
+    })
+    .startOf("minute");
   const availabiliesMinusBookings = getAvailabilitiesMinusBookings(
     availabilities,
-    bookings
+    bookings,
+    noMeetingsBefore
   );
   const meetingTypes = await MeetingTypeDb.find({ pk: "meetingtype" });
   // const bookerRes = await fetch(`${env.BACKEND_BASE_URL}/booker`);

@@ -18,7 +18,13 @@ const buttonStyle = defineStyleConfig({
       justifyContent: "space-between",
       _hover: {
         transform: "scale(1.05)",
-        borderColor: "gray.300",
+        borderColor: "brand.400",
+      },
+      // _focus is used when using tab to navigate the page
+      _focus: {
+        transform: "scale(1.05)",
+        borderColor: "brand.500",
+        outlineColor: "brand.500",
       },
       border: "1px",
       borderColor: "gray.500",
@@ -37,6 +43,7 @@ const buttonStyle = defineStyleConfig({
 });
 
 export const theme = extendTheme(
+  withDefaultColorScheme({ colorScheme: "brand" }),
   {
     colors: {
       brand: {
@@ -52,9 +59,9 @@ export const theme = extendTheme(
         900: "#153a24",
       },
       alternateText: "#333333",
+      secondaryText: "#CBD5E0", // gray.300
     },
   },
-  withDefaultColorScheme({ colorScheme: "brand" }),
   {
     components: {
       Button: buttonStyle,

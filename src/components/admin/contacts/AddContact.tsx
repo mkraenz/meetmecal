@@ -77,7 +77,7 @@ const AddContact: FC<Props> = () => {
       <Heading size="md">Add Contact</Heading>
 
       <FormControl mt={4} isRequired>
-        <FormLabel htmlFor="name" textColor={"gray.300"} mb={1}>
+        <FormLabel htmlFor="name" textColor={"secondaryText"} mb={1}>
           Name
         </FormLabel>
         <Input
@@ -92,7 +92,7 @@ const AddContact: FC<Props> = () => {
       </FormControl>
 
       <FormControl mt={4}>
-        <FormLabel htmlFor="email" textColor={"gray.300"} mb={1}>
+        <FormLabel htmlFor="email" textColor={"secondaryText"} mb={1}>
           Email address
         </FormLabel>
         <Input
@@ -108,7 +108,7 @@ const AddContact: FC<Props> = () => {
       </FormControl>
 
       <FormControl mt={4}>
-        <FormLabel htmlFor="notes" textColor={"gray.300"} mb={1}>
+        <FormLabel htmlFor="notes" textColor={"secondaryText"} mb={1}>
           Notes
         </FormLabel>
         <Textarea
@@ -136,7 +136,11 @@ const AddContact: FC<Props> = () => {
 
       <HStack gap={4} minW="sm">
         <FormControl>
-          <FormLabel htmlFor="invitationLink" textColor={"gray.300"} mb={1}>
+          <FormLabel
+            htmlFor="invitationLink"
+            textColor={"secondaryText"}
+            mb={1}
+          >
             Invitation Link
           </FormLabel>
           <Input

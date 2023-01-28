@@ -40,7 +40,13 @@ const Calendar: FC<Props> = ({ slots, visible }) => {
         <Heading as="h4" size={"md"} mb={4}>
           {state.meetingType?.displayName}
         </Heading>
-        <Text>All times in {formatTimezone()} time</Text>
+        <Heading as="h5" size="sm" mb={4}>
+          {" "}
+          Select a start time.
+        </Heading>
+        <Text textColor={"secondaryText"}>
+          All times in {formatTimezone()} time
+        </Text>
         {/* TODO handle no slots available */}
         {slots.map((slot) => (
           <CalendarSlotButton slot={slot} key={slot.start.getTime()} />

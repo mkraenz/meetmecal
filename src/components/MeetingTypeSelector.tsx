@@ -1,5 +1,5 @@
 import { ArrowForwardIcon } from "@chakra-ui/icons";
-import { Button, SlideFade, VStack } from "@chakra-ui/react";
+import { Button, Heading, SlideFade, VStack } from "@chakra-ui/react";
 import type { FC } from "react";
 import type { MeetingType } from "../state/app.context";
 import { useAppState } from "../state/app.context";
@@ -19,10 +19,6 @@ const SelectorButton: FC<{ type: MeetingType }> = ({ type }) => {
       onClick={selectType}
       key={type.id}
       rightIcon={<ArrowForwardIcon />}
-      _hover={{
-        transform: "scale(1.05)",
-        borderColor: "gray.300",
-      }}
     >
       {type.displayName}
     </Button>
@@ -38,6 +34,10 @@ const MeetingTypeSelector: FC<Props> = ({ types, visible }) => {
       transition={{ enter: { duration: 0.3 } }}
     >
       <VStack gap={1}>
+        <Heading as="h5" size="sm" mb={4}>
+          {" "}
+          Select the meeting duration.
+        </Heading>
         {types.map((type) => (
           <SelectorButton type={type} key={type.id} />
         ))}

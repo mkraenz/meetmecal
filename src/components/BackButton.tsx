@@ -12,10 +12,16 @@ const BackButton: FC = () => {
       leftIcon={<ArrowBackIcon />}
       onClick={goBack}
       variant={"outline"}
-      textColor={"gray.300"}
+      textColor={"secondaryText"}
       borderColor={"transparent"}
       _hover={{
-        borderColor: "gray.300",
+        borderColor: "secondaryText",
+      }}
+      // _focus is used when using tab to navigate the page
+      _focus={{
+        transform: "scale(1.05)",
+        borderColor: "brand.500",
+        outlineColor: "brand.500",
       }}
     >
       Back

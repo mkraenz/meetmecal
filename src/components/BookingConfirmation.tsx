@@ -29,7 +29,7 @@ const SecondaryText: FC<{ children: ReactNode; inline?: boolean }> = ({
   inline = false,
 }) => (
   <Text
-    color="gray.300"
+    color="secondaryText"
     as={inline ? "span" : undefined}
     display={inline ? "inline" : undefined}
   >

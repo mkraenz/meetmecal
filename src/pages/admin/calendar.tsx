@@ -141,7 +141,7 @@ const CalendarAdmin: NextPage<Props> = (props) => {
               right: "",
             }}
             eventClick={handleEventClick}
-            hiddenDays={[0, 6]} // hide weekends
+            // hiddenDays={[0, 6]} // hide weekends
             slotMinTime={"09:00:00"} // only show business hours
             slotMaxTime={"20:00:00"}
             slotDuration={"00:15:00"}
