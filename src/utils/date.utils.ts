@@ -11,6 +11,16 @@ export const formatDate = (slot: Slot) => {
   }).format(slot.start);
 };
 
+export const formatDateNoTimezone = (slot: Slot) => {
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(slot.start);
+};
+
 export const formatDateOnly = (date: Date | string) => {
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "full",

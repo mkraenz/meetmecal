@@ -13,7 +13,6 @@ import Head from "next/head";
 import type { FC } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
 import AdminLoadingIndicator from "../../components/admin/AdminLoadingIndicator";
-import Nav from "../../components/admin/AdminNav";
 import useAdminSession from "../../components/admin/useAdminSession";
 import type { BookingEntity } from "../../server/db";
 import { api } from "../../utils/api";
@@ -73,7 +72,6 @@ const BookingsAdmin: NextPage<Props> = (props) => {
       <Head>
         <title>Admin MeetMeCal - Bookings</title>
       </Head>
-      <Nav />
       <VStack as="main" gap={4} mb={16}>
         <Skeleton
           isLoaded={!bookings.isLoading}

@@ -15,16 +15,14 @@ const SelectorButton: FC<{ type: MeetingType }> = ({ type }) => {
     dispatch({ type: "setMeetingType", meetingType: type });
   return (
     <Button
+      variant={"ghost-grow"}
       onClick={selectType}
-      minW={"sm"}
       key={type.id}
       rightIcon={<ArrowForwardIcon />}
-      justifyContent={"space-between"}
       _hover={{
         transform: "scale(1.05)",
         borderColor: "gray.300",
       }}
-      borderColor={"gray.300"}
     >
       {type.displayName}
     </Button>

@@ -1,6 +1,15 @@
-import { ArrowRightIcon } from "@chakra-ui/icons";
+import {
+  ArrowRightIcon,
+  CalendarIcon,
+  ChatIcon,
+  EmailIcon,
+  InfoOutlineIcon,
+  TimeIcon,
+  ViewIcon,
+} from "@chakra-ui/icons";
 import {
   Button,
+  Divider,
   Drawer,
   DrawerBody,
   DrawerCloseButton,
@@ -12,17 +21,24 @@ import {
   Stack,
   useDisclosure,
 } from "@chakra-ui/react";
+import { signOut } from "next-auth/react";
 import { useRouter } from "next/router";
 import type { FC } from "react";
 import React from "react";
 
 const navData = [
-  { name: "Admin Home", href: "/admin" },
-  { name: "Availabilities", href: "/admin/availabilities" },
-  { name: "Calendar", href: "/admin/calendar" },
-  { name: "Contacts", href: "/admin/contacts" },
-  { name: "Bookings", href: "/admin/bookings" },
-];
+  { name: "Admin Home", href: "/admin", icon: InfoOutlineIcon },
+  { name: "Availabilities", href: "/admin/availabilities", icon: TimeIcon },
+  { name: "Calendar", href: "/admin/calendar", icon: CalendarIcon },
+  { name: "Contacts", href: "/admin/contacts", icon: ChatIcon },
+  { name: "Bookings", href: "/admin/bookings", icon: EmailIcon },
+  { name: "Home", href: "/", icon: ViewIcon, withDividerTop: true },
+] satisfies {
+  name: string;
+  href: string;
+  icon: unknown;
+  withDividerTop?: true;
+}[];
 
 interface Props {}
 
@@ -31,16 +47,13 @@ const Nav: FC<Props> = (props) => {
   const btnRef = React.useRef<HTMLButtonElement>(null);
   const router = useRouter();
 
-  const navigateTo = (href: string) => () => {
-    router.push(href);
-  };
+  const navigateTo = (href: string) => () => router.push(href);
   return (
     <>
       <IconButton
         icon={<ArrowRightIcon />}
         aria-label="open drawer navigation menu"
         ref={btnRef}
-        colorScheme="teal"
         onClick={onOpen}
         m={{ md: 8, base: 2 }}
       />
@@ -53,23 +66,28 @@ const Nav: FC<Props> = (props) => {
         <DrawerOverlay />
         <DrawerContent>
           <DrawerCloseButton />
-          <DrawerHeader>Admin Navigation</DrawerHeader>
+          <DrawerHeader>MeetMeCal Admin</DrawerHeader>
 
           <DrawerBody>
             <Stack justify="left">
               {navData.map((item) => (
-                <Button key={item.name} onClick={navigateTo(item.href)}>
-                  {item.name}
-                </Button>
+                <>
+                  {item.withDividerTop && <Divider />}
+                  <Button
+                    key={item.name}
+                    onClick={navigateTo(item.href)}
+                    leftIcon={<item.icon boxSize={6} />}
+                    variant="nav"
+                    bg={router.pathname === item.href ? "brand.800" : undefined}
+                  >
+                    {item.name}
+                  </Button>
+                </>
               ))}
             </Stack>
           </DrawerBody>
-
-          <DrawerFooter>
-            <Button variant="outline" mr={3} onClick={onClose}>
-              Cancel
-            </Button>
-            <Button colorScheme="blue">Save</Button>
+          <DrawerFooter borderTopWidth="1px">
+            <Button onClick={() => signOut()}>Sign Out</Button>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>

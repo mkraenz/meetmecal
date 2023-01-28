@@ -1,9 +1,9 @@
 import { ArrowForwardIcon } from "@chakra-ui/icons";
-import { Button, Heading, SlideFade, VStack } from "@chakra-ui/react";
+import { Button, Heading, SlideFade, Text, VStack } from "@chakra-ui/react";
 import type { FC } from "react";
 import type { Slot } from "../state/app.context";
 import { useAppState } from "../state/app.context";
-import { formatDate } from "../utils/date.utils";
+import { formatDateNoTimezone, formatTimezone } from "../utils/date.utils";
 import BackButton from "./BackButton";
 
 interface Props {
@@ -17,17 +17,11 @@ const CalendarSlotButton: FC<{ slot: Slot }> = ({ slot }) => {
   return (
     <Button
       onClick={selectSlot}
-      minW={"sm"}
       key={slot.start.getTime()}
       rightIcon={<ArrowForwardIcon />}
-      justifyContent={"space-between"}
-      _hover={{
-        transform: "scale(1.05)",
-        borderColor: "gray.300",
-      }}
-      borderColor={"gray.300"}
+      variant={"ghost-grow"}
     >
-      {formatDate(slot)}
+      {formatDateNoTimezone(slot)}
     </Button>
   );
 };
@@ -46,6 +40,7 @@ const Calendar: FC<Props> = ({ slots, visible }) => {
         <Heading as="h4" size={"md"} mb={4}>
           {state.meetingType?.displayName}
         </Heading>
+        <Text>All times in {formatTimezone()} time</Text>
         {/* TODO handle no slots available */}
         {slots.map((slot) => (
           <CalendarSlotButton slot={slot} key={slot.start.getTime()} />

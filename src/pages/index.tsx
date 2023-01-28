@@ -71,7 +71,7 @@ const Home: NextPage<Props> = (props) => {
           content={`Book a meeting with ${clientEnv.NEXT_PUBLIC_MY_FIRST_NAME}`}
         />
       </Head>
-      <VStack as="main" pt={20} gap={4}>
+      <VStack as="main" pt={20} pb={20} gap={4}>
         <VStack pb={10}>
           <Heading as="h1" size={"xl"}>
             {clientEnv.NEXT_PUBLIC_MY_NAME}
