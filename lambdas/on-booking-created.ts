@@ -35,7 +35,6 @@ export const lambdaHandler = async (
     const sendEmailToMeResult = await mailer.sendMail(emailToMe);
     console.log({ msg: "email sent", sendEmailToMeResult });
   } catch (err: unknown) {
-    // TODO what does step functions do when we return a 500 HTTP error?
     console.error(err);
   }
 };
