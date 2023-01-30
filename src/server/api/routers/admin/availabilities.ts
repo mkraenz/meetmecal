@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AvailabilityDb } from "../../../db";
+import { AvailabilityDb, myonetable } from "../../../db";
 import { dateToSeconds } from "../../../utils";
 
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
@@ -34,13 +34,16 @@ export const availabilitiesAdminRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input }) => {
-      // TODO this should be a transaction
       const end = new Date(input.end);
-      const availability = await AvailabilityDb.create({
-        start: new Date(input.start),
-        end,
-        ttl: dateToSeconds(end),
-      });
+      const transaction = {};
+      await AvailabilityDb.create(
+        {
+          start: new Date(input.start),
+          end,
+          ttl: dateToSeconds(end),
+        },
+        { transaction }
+      );
 
       const endInSecs = dateToSeconds(input.oldEnd);
       await AvailabilityDb.remove(
@@ -50,8 +53,11 @@ export const availabilitiesAdminRouter = createTRPCRouter({
         },
         {
           exists: true, // remove will throw if value does not exist
+          transaction,
         }
       );
+      await myonetable.transact("write", transaction);
+
       return { success: true };
     }),
   getAll: protectedProcedure.query(async () => {
