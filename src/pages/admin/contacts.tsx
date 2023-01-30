@@ -76,7 +76,6 @@ const ContactsAdmin: NextPage<Props> = (props) => {
                       <IconButton
                         icon={<DeleteIcon />}
                         aria-label="Delete contact"
-                        // TODO implement
                         onClick={() => handleDelete(id)}
                       />
                     </Td>
