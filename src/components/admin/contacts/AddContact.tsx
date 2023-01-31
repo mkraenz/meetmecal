@@ -31,6 +31,17 @@ const AddContact: FC<Props> = () => {
   const create = api.contactsAdmin.create.useMutation();
 
   const onSubmit = () => {
+    const contactExists = contacts.data?.some(
+      (contact) => `${contact.name}${contact.email}` === `${name}${email}`
+    );
+    if (contactExists) {
+      toast({
+        title: "Name-email combination already exists. Please choose another.",
+        status: "error",
+        isClosable: true,
+      });
+      return;
+    }
     create.mutate(
       {
         name,
@@ -44,10 +55,6 @@ const AddContact: FC<Props> = () => {
           contacts.refetch();
           clipboard.setValue(link);
           clipboard.onCopy();
-          toast({
-            title: "Invitation link copied to clipboard",
-            status: "success",
-          });
         },
         onError: (error) => {
           console.error(error);

@@ -56,7 +56,7 @@ const ContactsAdmin: NextPage<Props> = (props) => {
               </Thead>
               <Tbody>
                 {(contacts.data || []).map(({ name, email, notes, id }) => (
-                  <Tr key={name}>
+                  <Tr key={id}>
                     <Td>{name}</Td>
                     <Td>
                       {email ? (
