@@ -1,6 +1,5 @@
 import { DateTime, Interval } from "luxon";
 import type { AvailabilityEntity, BookingEntity } from "../server/db";
-import { last } from "./mymath";
 
 export const getAvailabilitiesMinusBookings = (
   availabilityEntities: AvailabilityEntity[],
@@ -26,21 +25,8 @@ export const getAvailabilitiesMinusBookings = (
     )
     .filter((a) => a.isValid && a.end > DateTime.now());
 
-  // merge availabilities that overlap
-  // 'maximal availabilitiy' in the sense that no two availabilities overlap or are adjacent
-  const maxAvs = futureAvs
-    .sort((a, b) => a.start.toMillis() - b.start.toMillis()) // earliest first
-    .reduce<Interval[]>((mergedAvs, next) => {
-      if (mergedAvs.length === 0) return [next];
-      // avs are valid (end > start) and
-      // sorted by start time (earliest first).
-      // Thus we just need to check for overlap on consecutive avs.
-      const previous = last(mergedAvs);
-      if (previous.overlaps(next)) {
-        return [...mergedAvs.slice(0, -1), previous.union(next)];
-      }
-      return [...mergedAvs, next];
-    }, []);
+  // merge overlapping or adjacent intervals
+  const maxAvs = Interval.merge(futureAvs);
   const futureBookings = bookingsEntities
     .map((b) =>
       Interval.fromISO(`${b.start.toISOString()}/${b.end.toISOString()}`)
