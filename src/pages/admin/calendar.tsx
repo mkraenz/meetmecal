@@ -10,6 +10,7 @@ import type { EventResizeDoneArg } from "@fullcalendar/interaction";
 import interactionPlugin from "@fullcalendar/interaction";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
+import { Interval } from "luxon";
 import { type NextPage } from "next";
 import Head from "next/head";
 import { useRef, useState } from "react";
@@ -51,6 +52,7 @@ const CalendarAdmin: NextPage<Props> = (props) => {
   };
   const createAvailability = api.availabilitiesAdmin.create.useMutation();
   const moveAvailability = api.availabilitiesAdmin.move.useMutation();
+  const mergeAvailability = api.availabilitiesAdmin.merge.useMutation();
 
   const availabilityEvents: EventInput[] =
     availabilities.data?.map((availability) => ({
@@ -72,11 +74,53 @@ const CalendarAdmin: NextPage<Props> = (props) => {
     event,
     oldEvent,
   }: EventResizeDoneArg | EventDropArg) => {
-    if (event.start && event.end && oldEvent.end) {
+    const eventEnd = event.end;
+    if (event.start && eventEnd && oldEvent.end && oldEvent.start) {
+      const overlaps = availabilities.data
+        ?.map((a) => Interval.fromISO(`${a.start}/${a.end}`))
+        .filter((interval) =>
+          interval.overlaps(
+            Interval.fromISO(
+              `${event.start?.toISOString()}/${eventEnd.toISOString()}`
+            )
+          )
+        );
+      if (overlaps && overlaps.length > 0) {
+        const confirmed = confirm(
+          "Warning: Selected interval overlaps other availabilities. Would you like to merge them into one? If not, please select a different start or end time."
+        );
+        if (confirmed) {
+          const mergedIntervals = Interval.merge([
+            ...overlaps,
+            Interval.fromISO(
+              `${event.start.toISOString()}/${eventEnd.toISOString()}`
+            ),
+          ]);
+          if (mergedIntervals.length !== 1)
+            return alert("My bad, the logic is wrong. Please contact us.");
+          mergeAvailability.mutate(
+            {
+              // for whatever reason, zod does not like Luxon's toISO()
+              start: mergedIntervals[0].start.toJSDate().toISOString(),
+              end: mergedIntervals[0].end.toJSDate().toISOString(),
+              overlaps: overlaps.map((a) => ({
+                start: a.start.toJSDate().toISOString(),
+                end: a.end.toJSDate().toISOString(),
+              })),
+            },
+            {
+              onSuccess: () => availabilities.refetch(),
+              onError: () =>
+                alert("This didn't work as expected. Please try again."),
+            }
+          );
+          return;
+        }
+      }
       moveAvailability.mutate(
         {
           start: event.start.toISOString(),
-          end: event.end.toISOString(),
+          end: eventEnd.toISOString(),
           oldEnd: oldEvent.end.toISOString(),
         },
         {
@@ -88,11 +132,51 @@ const CalendarAdmin: NextPage<Props> = (props) => {
     }
   };
   const handleSelect = ({ start, end }: DateSelectArg) => {
-    // overlapping avs are handled gracefully on backend using getAvailabilitiesMinusBookings
     const confirmed = confirm(
       `Would you like to add an availability from ${start} to ${end}?`
     );
     if (confirmed) {
+      const overlaps = availabilities.data
+        ?.map((a) => Interval.fromISO(`${a.start}/${a.end}`))
+        .filter((interval) =>
+          interval.overlaps(
+            Interval.fromISO(`${start.toISOString()}/${end.toISOString()}`)
+          )
+        );
+      if (overlaps && overlaps.length > 0) {
+        const mergeConfirmed = confirm(
+          "Warning: Selected interval overlaps other availabilities. Would you like to merge them into one? If not, please select a different start or end time."
+        );
+        if (!mergeConfirmed) {
+          return alert(
+            "Please select a different start or end time, or allow merging."
+          );
+        }
+        const mergedIntervals = Interval.merge([
+          ...overlaps,
+          Interval.fromISO(`${start.toISOString()}/${end.toISOString()}`),
+        ]);
+        if (mergedIntervals.length !== 1)
+          return alert("My bad, the logic is wrong. Please contact us.");
+        mergeAvailability.mutate(
+          {
+            // for whatever reason, zod does not like Luxon's toISO()
+            start: mergedIntervals[0].start.toJSDate().toISOString(),
+            end: mergedIntervals[0].end.toJSDate().toISOString(),
+            overlaps: overlaps.map((a) => ({
+              start: a.start.toJSDate().toISOString(),
+              end: a.end.toJSDate().toISOString(),
+            })),
+          },
+          {
+            onSuccess: () => availabilities.refetch(),
+            onError: () =>
+              alert("This didn't work as expected. Please try again."),
+          }
+        );
+        return;
+      }
+
       createAvailability.mutate(
         {
           start: start.toISOString(),
@@ -101,10 +185,7 @@ const CalendarAdmin: NextPage<Props> = (props) => {
         {
           onSuccess: () => availabilities.refetch(),
           onError: () =>
-            //  TODO is there a way to block the user from selecting an existing end time
-            alert(
-              "This didn't work as expected. Did you try to use the same end time as an existing availability? Then just make your new availability slightly shorter. Otherwise, please try again."
-            ),
+            alert("This didn't work as expected. Please try again."),
         }
       );
     }
@@ -115,7 +196,6 @@ const CalendarAdmin: NextPage<Props> = (props) => {
       left: jsEvent.pageX,
       top: jsEvent.pageY,
     });
-    console.log(event, jsEvent, rest);
     setSelectedEvent(event);
     buttonRef.current?.click();
   };

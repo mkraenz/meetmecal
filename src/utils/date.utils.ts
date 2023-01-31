@@ -1,3 +1,4 @@
+import { DateTime } from "luxon";
 import type { Slot } from "../state/app.context";
 
 export const formatDate = (slot: Slot) => {
@@ -38,3 +39,6 @@ export const formatTimezone = () => {
 };
 
 const toDate = (date: Date | string) => new Date(date);
+
+export const truncateDateByMinute = (d: string | Date) =>
+  DateTime.fromJSDate(toDate(d)).startOf("minute").toJSDate();

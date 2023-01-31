@@ -41,7 +41,7 @@ const navData = [
 
 interface Props {}
 
-const Nav: FC<Props> = (props) => {
+const AdminNav: FC<Props> = (props) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const btnRef = React.useRef<HTMLButtonElement>(null);
   const router = useRouter();
@@ -70,7 +70,7 @@ const Nav: FC<Props> = (props) => {
           <DrawerBody>
             <Stack justify="left">
               {navData.map((item) => (
-                <>
+                <React.Fragment key={item.name}>
                   {item.withDividerTop && <Divider />}
                   <Button
                     key={item.name}
@@ -81,7 +81,7 @@ const Nav: FC<Props> = (props) => {
                   >
                     {item.name}
                   </Button>
-                </>
+                </React.Fragment>
               ))}
             </Stack>
           </DrawerBody>
@@ -94,4 +94,4 @@ const Nav: FC<Props> = (props) => {
   );
 };
 
-export default Nav;
+export default AdminNav;
