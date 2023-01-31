@@ -101,8 +101,9 @@ const CalendarAdmin: NextPage<Props> = (props) => {
         {
           onSuccess: () => availabilities.refetch(),
           onError: () =>
+            //  TODO is there a way to block the user from selecting an existing end time
             alert(
-              "This didn't work as expected. Did you try to have the same end time as an existing availability - because that won't work... In any other case, please try again."
+              "This didn't work as expected. Did you try to use the same end time as an existing availability? Then just make your new availability slightly shorter. Otherwise, please try again."
             ),
         }
       );
