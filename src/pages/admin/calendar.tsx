@@ -136,6 +136,7 @@ const CalendarAdmin: NextPage<Props> = (props) => {
       `Would you like to add an availability from ${start} to ${end}?`
     );
     if (confirmed) {
+      // so much duplication, but good enough for now... Refactor in case I touch this again
       const overlaps = availabilities.data
         ?.map((a) => Interval.fromISO(`${a.start}/${a.end}`))
         .filter((interval) =>
