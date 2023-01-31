@@ -1,9 +1,11 @@
 import { unmarshall } from "@aws-sdk/util-dynamodb";
+import { assert } from "console";
 import { createTransport } from "nodemailer";
 import type { EmailConfig } from "./email-config.dto";
 import { getEmailConfig } from "./email-config.dto";
 
 type Booking = {
+  pk: string; // see db.ts -> always 'booking'
   contact: {
     name: string;
     email: string;
@@ -23,7 +25,11 @@ export const lambdaHandler = async (
   try {
     const event = rawEvent[0];
     // @see https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/modules/_aws_sdk_util_dynamodb.html
-    const booking = unmarshall(event.dynamodb.NewImage) as Booking; // TODO validate that its a Booking
+    const booking = unmarshall(event.dynamodb.NewImage) as Booking;
+    assert(
+      booking.pk === "booking",
+      "incoming NewImage is not a Booking. Check the Eventbridge Pipe Filter."
+    );
 
     const cfg = await getEmailConfig();
     const emailToGuest = getEmail(booking, cfg, booking.contact.email);
