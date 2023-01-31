@@ -3,7 +3,6 @@ import {
   CalendarIcon,
   ChatIcon,
   EmailIcon,
-  InfoOutlineIcon,
   TimeIcon,
   ViewIcon,
 } from "@chakra-ui/icons";
@@ -27,9 +26,9 @@ import type { FC } from "react";
 import React from "react";
 
 const navData = [
-  { name: "Admin Home", href: "/admin", icon: InfoOutlineIcon },
-  { name: "Availabilities", href: "/admin/availabilities", icon: TimeIcon },
+  // { name: "Admin Home", href: "/admin", icon: InfoOutlineIcon },
   { name: "Calendar", href: "/admin/calendar", icon: CalendarIcon },
+  { name: "Availabilities", href: "/admin/availabilities", icon: TimeIcon },
   { name: "Contacts", href: "/admin/contacts", icon: ChatIcon },
   { name: "Bookings", href: "/admin/bookings", icon: EmailIcon },
   { name: "Home", href: "/", icon: ViewIcon, withDividerTop: true },

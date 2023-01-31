@@ -1,4 +1,3 @@
-import { adminRouter } from "./routers/admin";
 import { availabilitiesAdminRouter } from "./routers/admin/availabilities";
 import { bookingsAdminRouter } from "./routers/admin/bookings";
 import { contactsAdminRouter } from "./routers/admin/contacts";
@@ -12,7 +11,6 @@ import { createTRPCRouter } from "./trpc";
  */
 export const appRouter = createTRPCRouter({
   bookings: bookingRouter,
-  admin: adminRouter,
   availabilitiesAdmin: availabilitiesAdminRouter,
   bookingsAdmin: bookingsAdminRouter,
   contactsAdmin: contactsAdminRouter,

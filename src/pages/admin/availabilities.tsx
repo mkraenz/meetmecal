@@ -15,7 +15,6 @@ import { type NextPage } from "next";
 import Head from "next/head";
 import AdminLayout from "../../components/admin/AdminLayout";
 import AdminLoadingIndicator from "../../components/admin/AdminLoadingIndicator";
-import AddAvailability from "../../components/admin/availabilities/AddAvailability";
 import useAdminSession from "../../components/admin/useAdminSession";
 import { api } from "../../utils/api";
 import { formatDateOnly, formatTime } from "../../utils/date.utils";
@@ -80,7 +79,6 @@ const AvailabilitiesAdmin: NextPage<Props> = (props) => {
             </Table>
           </TableContainer>
         </Skeleton>
-        <AddAvailability />
       </VStack>
     </AdminLayout>
   );
