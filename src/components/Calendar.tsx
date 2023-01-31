@@ -73,7 +73,6 @@ const Calendar: FC<Props> = ({ slots, visible }) => {
             <Text textColor={"secondaryText"}>
               All times in {formatTimezone()} time
             </Text>
-            {/* TODO handle no slots available */}
             {slots.map((slot) => (
               <CalendarSlotButton slot={slot} key={slot.start.getTime()} />
             ))}
