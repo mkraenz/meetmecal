@@ -1,5 +1,13 @@
+import { DateTime, Interval } from "luxon";
 import { z } from "zod";
-import { BookingDb, ContactDb, MeetingTypeDb, TokenDb } from "../../db";
+import { getAvailabilitiesMinusBookings } from "../../../utils/getAvailabilitiesMinusBookings";
+import {
+  AvailabilityDb,
+  BookingDb,
+  ContactDb,
+  MeetingTypeDb,
+  TokenDb,
+} from "../../db";
 import { getRandomId } from "../../utils";
 
 import { createTRPCRouter, publicProcedure } from "../trpc";
@@ -22,8 +30,6 @@ export const bookingRouter = createTRPCRouter({
     if (tokenIsValid)
       return { error: 401, message: "Invalid or expired token" };
 
-    // TODO make sure that the slot is available
-
     const correlationId = getRandomId(10);
     console.log("booking...", { correlationId });
     const contact = await ContactDb.get({ id: accessToken.contactId });
@@ -33,6 +39,36 @@ export const bookingRouter = createTRPCRouter({
       (Math.floor(new Date(input.slot).getTime() / 1000 / 60) +
         meetingType.durationInMins) *
       60;
+
+    // making sure the slot is available
+    const slot = Interval.fromDateTimes(
+      DateTime.fromISO(input.slot),
+      DateTime.fromSeconds(endInSecs)
+    );
+
+    const rawAvailabilities = await AvailabilityDb.find({ pk: "availability" });
+    const existingBookings = await BookingDb.find({ pk: "booking" });
+    const availabilities = getAvailabilitiesMinusBookings(
+      rawAvailabilities,
+      existingBookings
+    );
+    const slotIsInavailable = availabilities.some((a) => slot.overlaps(a));
+    if (slotIsInavailable) {
+      console.warn(
+        "inavailable slot being booked. This shouldn't happen with normal app usage (unless we have a bug e.g. in calculating actual availabilities)",
+        {
+          correlationId,
+          slot: input.slot,
+          endInSecs,
+          meetingTypeDuration: meetingType.durationInMins,
+        }
+      );
+      return {
+        error: 409,
+        message:
+          "Slot is not available for the given duration. Please choose a different slot and/or duration.",
+      };
+    }
 
     const booking = await BookingDb.create({
       contactId: contact.id,

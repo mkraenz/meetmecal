@@ -88,7 +88,7 @@ const CalendarAdmin: NextPage<Props> = (props) => {
     }
   };
   const handleSelect = ({ start, end }: DateSelectArg) => {
-    // TODO handle overlapping availabilities (also for move and resize...?) Or maybe handle on backend? Or only on bookers' frontend?
+    // overlapping avs are handled gracefully on backend using getAvailabilitiesMinusBookings
     const confirmed = confirm(
       `Would you like to add an availability from ${start} to ${end}?`
     );
@@ -101,7 +101,9 @@ const CalendarAdmin: NextPage<Props> = (props) => {
         {
           onSuccess: () => availabilities.refetch(),
           onError: () =>
-            alert("This didn't work as expected. Please try again."),
+            alert(
+              "This didn't work as expected. Did you try to have the same end time as an existing availability - because that won't work... In any other case, please try again."
+            ),
         }
       );
     }
