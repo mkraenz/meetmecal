@@ -97,7 +97,7 @@ const CalendarAdmin: NextPage<Props> = (props) => {
             ),
           ]);
           if (mergedIntervals.length !== 1)
-            return alert("My bad, the logic is wrong. Please contact us.");
+            return alert("This is definitely a bug. Please contact us.");
           mergeAvailability.mutate(
             {
               // for whatever reason, zod does not like Luxon's toISO()
