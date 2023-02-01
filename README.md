@@ -71,3 +71,44 @@ You can check out the [create-t3-app GitHub repository](https://github.com/t3-os
 ## T3 Stack - How do I deploy this?
 
 Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+
+## Deploy to AWS Amplify Hosting
+
+### Steps
+
+- Create AWS Amplify Hosting (see <https://aws.amazon.com/blogs/mobile/amplify-next-js-13/> )
+- If using env vars on nextjs server-side, then change the Amplify build template to
+
+```yaml
+---
+build:
+  commands:
+    # enable server-side env vars. seehttps://docs.aws.amazon.com/amplify/latest/userguide/ssr-environment-variables.html
+    - env | grep -e NEXTAUTH_URL -e NEXTAUTH_SECRET -e BACKEND_BASE_URL -e MY_FIRST_NAME -e MY_AWS_USER_ACCESS_KEY_ID -e MY_AWS_USER_ACCESS_KEY_SECRET -e MY_AWS_DYNAMODB_TABLE_NAME -e MY_AWS_REGION -e MY_AWS_COGNITO_CLIENT_ID -e MY_AWS_COGNITO_CLIENT_SECRET -e MY_AWS_COGNITO_ISSUER >> .env.production
+    - npm run build
+```
+
+- set env vars in Amplify, e.g. via AWS cli v2:
+
+```sh
+# get the amplify app id from AWS Console -> Amplify -> App Settings -> General -> App ARN `arn:aws:amplify:us-east-1:xxxxxxxxxx/<APPID>`
+# `paste` shell command turns the .env file into a comma-separated single line (as long as there are no empty lines or comments in the .env file)
+# WARNING: this completely REPLACES all env vars in amplify
+MY_AMPLIFY_APP_ID=<APP_ID>
+aws amplify update-app --app-id $MY_AMPLIFY_APP_ID --environment-variables "$(paste -d ',' -s './.env')"
+```
+
+- Redeploy the app
+- verify app works under the Amplify-defined URL
+- Custom Domain setup -> <https://docs.aws.amazon.com/amplify/latest/userguide/custom-domains.html>
+- if you've setup Cognito Authentication before, make sure to include new Callback URLs in Cognito for the new domain
+- custom domain name + HTTPS/SSL
+  - 2 steps: first verify domain ownership via setting specific CNAME in your domain registrar, then do the same but for the actual domain for Amplify Hosting
+
+### Remarks
+
+- slightly more difficult that Vercel
+- can use api routes
+- env vars are somewhat annoying to set up in AWS Amplify Hosting
+- custom domain including HTTPS/SSL is easy (though instructions are less clear than on Vercel)
+- autodeploy from github branch easily set up
