@@ -1,0 +1,3 @@
+name: mmc-infrastructure
+runtime: nodejs
+description: A minimal TypeScript Pulumi program

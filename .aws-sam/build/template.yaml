@@ -1,0 +1,298 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'meetmecal
+
+  Sample SAM Template for MeetMeCal
+
+  '
+Parameters:
+  Stage:
+    Type: String
+    Description: Stage name for the API
+    Default: Dev
+  BookingConfirmationMailSmtpHost:
+    Type: String
+  BookingConfirmationMailSmtpUsername:
+    Type: String
+  BookingConfirmationMailSmtpPassword:
+    Type: String
+  BookingConfirmationMailSmtpPort:
+    Type: String
+    Default: 465
+  BookingConfirmationMailUseSsl:
+    Type: String
+    Default: 'true'
+  BookingConfirmationMailMyEmailAddress:
+    Type: String
+  BookingConfirmationMailFromAddress:
+    Type: String
+  BookingConfirmationMailMyFirstName:
+    Type: String
+  BookingConfirmationMailMyLastName:
+    Type: String
+  AuthCallbackUrl:
+    Type: String
+  AuthLogoutUrl:
+    Type: String
+  AuthCallbackUrl2:
+    Type: String
+  AuthLogoutUrl2:
+    Type: String
+  AuthUserPoolDomainName:
+    Type: String
+  AdminEmail:
+    Type: String
+Resources:
+  DbTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::Sub: ${AWS::StackName}-${AWS::Region}-${Stage}-db
+      AttributeDefinitions:
+      - AttributeName: pk
+        AttributeType: S
+      - AttributeName: sk
+        AttributeType: S
+      - AttributeName: gs1pk
+        AttributeType: S
+      - AttributeName: gs1sk
+        AttributeType: S
+      KeySchema:
+      - AttributeName: pk
+        KeyType: HASH
+      - AttributeName: sk
+        KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      GlobalSecondaryIndexes:
+      - IndexName: reversekeyindex
+        KeySchema:
+        - AttributeName: sk
+          KeyType: HASH
+        - AttributeName: pk
+          KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+      - IndexName: gs1
+        KeySchema:
+        - AttributeName: gs1pk
+          KeyType: HASH
+        - AttributeName: gs1sk
+          KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+  NextjsToDynamoDBUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName:
+        Fn::Sub: ${AWS::StackName}-${AWS::Region}-${Stage}-nextjs-to-dynamodb
+      Policies:
+      - PolicyName: NextjsToDynamoDBPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Sid: CrudDynamodb
+            Effect: Allow
+            Action:
+            - dynamodb:putItem
+            - dynamodb:getItem
+            - dynamodb:updateItem
+            - dynamodb:deleteItem
+            - dynamodb:query
+            Resource:
+            - Fn::GetAtt:
+              - DbTable
+              - Arn
+            - Fn::Sub: ${DbTable.Arn}/index/*
+  NextjsToDynamoDBUserAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      Serial: 1
+      Status: Active
+      UserName:
+        Ref: NextjsToDynamoDBUser
+  PipeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - pipes.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Policies:
+      - PolicyName:
+          Fn::Sub: ${AWS::StackName}-${AWS::Region}-${Stage}-source-policy
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+          - Effect: Allow
+            Action:
+            - dynamodb:DescribeStream
+            - dynamodb:GetRecords
+            - dynamodb:GetShardIterator
+            - dynamodb:ListStreams
+            Resource:
+              Fn::GetAtt:
+              - DbTable
+              - StreamArn
+      - PolicyName:
+          Fn::Sub: ${AWS::StackName}-${AWS::Region}-${Stage}-target-policy
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+          - Effect: Allow
+            Action:
+            - lambda:InvokeFunction
+            Resource:
+              Fn::GetAtt:
+              - BookingCreatedFn
+              - Arn
+  BookingCreatedFn:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: BookingCreatedFn
+      Handler: on-booking-created.lambdaHandler
+      Environment:
+        Variables:
+          SMTP_HOST:
+            Fn::Sub: ${BookingConfirmationMailSmtpHost}
+          SMTP_USERNAME:
+            Fn::Sub: ${BookingConfirmationMailSmtpUsername}
+          SMTP_PASSWORD:
+            Fn::Sub: ${BookingConfirmationMailSmtpPassword}
+          SMTP_PORT:
+            Fn::Sub: ${BookingConfirmationMailSmtpPort}
+          USE_SSL:
+            Fn::Sub: ${BookingConfirmationMailUseSsl}
+          MY_EMAIL_ADDRESS:
+            Fn::Sub: ${BookingConfirmationMailMyEmailAddress}
+          FROM_ADDRESS:
+            Fn::Sub: ${BookingConfirmationMailFromAddress}
+          MY_NAME:
+            Fn::Sub: ${BookingConfirmationMailMyFirstName} ${BookingConfirmationMailMyLastName}
+      Runtime: nodejs16.x
+      Architectures:
+      - x86_64
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        EntryPoints:
+        - on-booking-created.ts
+        Minify: true
+        Target: es2020
+      SamResourceId: BookingCreatedFn
+  BookingCreatedPipe:
+    Type: AWS::Pipes::Pipe
+    Properties:
+      Name:
+        Fn::Sub: ${AWS::StackName}-${AWS::Region}-${Stage}-booking-created
+      Description: Pipes to connect to DDB stream listening only for creation changes
+      RoleArn:
+        Fn::GetAtt:
+        - PipeRole
+        - Arn
+      Source:
+        Fn::GetAtt:
+        - DbTable
+        - StreamArn
+      SourceParameters:
+        FilterCriteria:
+          Filters:
+          - Pattern: '{"eventName":["INSERT"],"dynamodb":{"NewImage":{"pk":{"S":["booking"]}}}}'
+        DynamoDBStreamParameters:
+          StartingPosition: LATEST
+          BatchSize: 1
+      Target:
+        Fn::GetAtt:
+        - BookingCreatedFn
+        - Arn
+      TargetParameters:
+        LambdaFunctionParameters:
+          InvocationType: FIRE_AND_FORGET
+  CognitoAuthorizerUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: cognito-user-pool-userpool
+  CognitoAuthorizerUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      AllowedOAuthFlows:
+      - code
+      GenerateSecret: true
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthScopes:
+      - email
+      - openid
+      - profile
+      CallbackURLs:
+      - Ref: AuthCallbackUrl
+      - Ref: AuthCallbackUrl2
+      LogoutURLs:
+      - Ref: AuthLogoutUrl
+      - Ref: AuthLogoutUrl2
+      ClientName:
+        Fn::Sub: ${AWS::StackName}-${AWS::Region}-${Stage}-nextjs-admin-login
+      SupportedIdentityProviders:
+      - COGNITO
+      UserPoolId:
+        Ref: CognitoAuthorizerUserPool
+      PreventUserExistenceErrors: ENABLED
+  CognitoAuthorizerUserPoolUser:
+    Type: AWS::Cognito::UserPoolUser
+    Properties:
+      UserAttributes:
+      - Name: email
+        Value:
+          Ref: AdminEmail
+      Username:
+        Ref: AdminEmail
+      UserPoolId:
+        Ref: CognitoAuthorizerUserPool
+  CognitoAuthorizerUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain:
+        Ref: AuthUserPoolDomainName
+      UserPoolId:
+        Ref: CognitoAuthorizerUserPool
+Outputs:
+  AccessKeyId:
+    Value:
+      Ref: NextjsToDynamoDBUserAccessKey
+  AccessKeySecret:
+    Value:
+      Fn::GetAtt:
+      - NextjsToDynamoDBUserAccessKey
+      - SecretAccessKey
+  TableName:
+    Value:
+      Ref: DbTable
+  UserName:
+    Value:
+      Ref: NextjsToDynamoDBUser
+  BookingCreatedPipeName:
+    Value:
+      Ref: BookingCreatedPipe
+  BookingCreatedFnName:
+    Value:
+      Ref: BookingCreatedFn
+  HostedAuthUI:
+    Description: Hosted Authentication UI
+    Value:
+      Fn::Sub: https://${CognitoAuthorizerUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com/login?client_id=${CognitoAuthorizerUserPoolClient}&response_type=code&scope=email+openid+profile&redirect_uri=${AuthCallbackUrl}

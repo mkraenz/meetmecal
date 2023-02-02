@@ -1,0 +1,21 @@
+config:
+  aws:region: us-east-1
+  mmc-infrastructure:awsAccountId: "756399734264"
+  mmc-infrastructure:awsCognitoClientId: 7uustvd1e9m5uduu6m0kqfmt4l
+  mmc-infrastructure:awsCognitoClientSecret:
+    secure: AAABADauYbWleQEiTfNjVM3wyQbH1gqucL9XwfkYK4YhGQr1WsgZx7aOhqxztXSbWZmGmrdhSUQA5kvUgJHXNl/nFmgS8q9u1c0c6HFkxHF/7qHa
+  mmc-infrastructure:awsCognitoIssuerUrl:
+    secure: AAABAG79muYYQzFE6RGh3zVXWGBsoxrx/XvoLiAZJO+/HGduobT6EgqziUtL/O1HU8cEGCEZwchELMbhjvAEHCUFRpeB23DHBWBchOPk2mjIlKBIKW2eE5mIz07fypxVwhqBx9Y=
+  mmc-infrastructure:awsUserAccessKeyId:
+    secure: AAABAMRVCoR4HHQCn809dlot19v+jTGdwy3LaRclYz0WPjJJzrWYh9HCFtFerP+Fmo7zlw==
+  mmc-infrastructure:awsUserAccessKeySecret:
+    secure: AAABACOTaCENQA9XS203u32yaMInOpT16IzbpV631Uw0GUFtLqlvBz+X7BZrWF5xw8E7CDltcHCTA6gU3SPE0xOGsDaTo3s0
+  mmc-infrastructure:gitRepositoryUrl: https://github.com/mkraenz/meetmecal
+  mmc-infrastructure:githubPersonalAccessToken:
+    secure: AAABANd+FH5bF7U8fiRvfiygIUdqaMOUcWAWaxQvrANoPovL0o2G5TC4fA1QyyxSHAQ6q5E+4NsqjAAji3eKqvLCsgVja3bo
+  mmc-infrastructure:myCompanyEmail:
+    secure: AAABACmqLGrNissKveh7dczc8oTi6Cc31yc1TfGB8tOHbxUnFxG9zHfFUE+fIkokP1w=
+  mmc-infrastructure:myFirstName: Mirco
+  mmc-infrastructure:myName: Mirco Kraenz
+  mmc-infrastructure:nextAuthSecret:
+    secure: AAABAJTSOWR2RCCytwsp++vXKND2HTsgibrIAu+XY8H+zP7VyzrBOjr9fifWTIJLalHajpO3xbc36yd5HDtDQSxt3TvtuQ11I2tDzw==

@@ -1,0 +1,20 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - cd ./app # this is the directory where the frontend code is. The cd applies to ALL commands
+        - npm ci
+    build:
+      commands:
+        # running from ./app
+        # enable server-side env vars. seehttps://docs.aws.amazon.com/amplify/latest/userguide/ssr-environment-variables.html
+        - env | grep -e NEXTAUTH_URL -e NEXTAUTH_SECRET -e BACKEND_BASE_URL -e MY_FIRST_NAME -e MY_AWS_USER_ACCESS_KEY_ID -e MY_AWS_USER_ACCESS_KEY_SECRET -e MY_AWS_DYNAMODB_TABLE_NAME -e MY_AWS_REGION -e MY_AWS_COGNITO_CLIENT_ID -e MY_AWS_COGNITO_CLIENT_SECRET -e MY_AWS_COGNITO_ISSUER >> .env.production
+        - npm run build
+  artifacts:
+    baseDirectory: .next
+    files:
+      - "**/*"
+  cache:
+    paths:
+      - node_modules/**/*
