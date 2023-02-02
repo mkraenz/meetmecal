@@ -77,8 +77,6 @@ const dynamoDbTable = new aws.dynamodb.Table(
   }
 );
 
-dynamoDbTable.arn;
-
 const nextAppServiceRole = new aws.iam.Role("nextAppServiceRole", {
   assumeRolePolicy: aws.iam.assumeRolePolicyForPrincipal({
     Service: "amplify.amazonaws.com",

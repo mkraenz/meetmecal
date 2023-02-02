@@ -1,0 +1,55 @@
+{
+  "name": "meetmecal",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "lint": "next lint",
+    "start": "next start",
+    "db:mock": "json-server --watch db.json --port 3001"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.245.0",
+    "@chakra-ui/icons": "^2.0.15",
+    "@chakra-ui/react": "^2.4.6",
+    "@emotion/react": "^11.10.5",
+    "@emotion/styled": "^11.10.5",
+    "@fullcalendar/core": "^6.0.3",
+    "@fullcalendar/interaction": "^6.0.3",
+    "@fullcalendar/react": "^6.0.4",
+    "@fullcalendar/timegrid": "^6.0.3",
+    "@tanstack/react-query": "^4.20.0",
+    "@trpc/client": "^10.7.0",
+    "@trpc/next": "^10.7.0",
+    "@trpc/react-query": "^10.7.0",
+    "@trpc/server": "^10.7.0",
+    "dynamodb-onetable": "^2.5.1",
+    "framer-motion": "^8.2.4",
+    "luxon": "^3.2.1",
+    "next": "13.1.1",
+    "next-auth": "^4.18.7",
+    "next-superjson-plugin": "^0.5.3",
+    "react": "18.2.0",
+    "react-datepicker": "^4.8.0",
+    "react-dom": "18.2.0",
+    "react-hook-form": "^7.41.5",
+    "superjson": "1.9.1",
+    "zod": "^3.20.2"
+  },
+  "devDependencies": {
+    "@types/luxon": "^3.2.0",
+    "@types/node": "^18.11.18",
+    "@types/react": "^18.0.26",
+    "@types/react-datepicker": "^4.8.0",
+    "@types/react-dom": "^18.0.10",
+    "@typescript-eslint/eslint-plugin": "^5.47.1",
+    "@typescript-eslint/parser": "^5.47.1",
+    "eslint": "^8.30.0",
+    "eslint-config-next": "13.1.1",
+    "typescript": "^4.9.4"
+  },
+  "ct3aMetadata": {
+    "initVersion": "7.0.1"
+  }
+}
