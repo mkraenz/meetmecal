@@ -5,11 +5,6 @@ import { getFrontendServiceRolePolicy } from "./frontendServiceRolePolicy";
 
 const config = new pulumi.Config();
 const awsConfig = new pulumi.Config("aws");
-const awsCognitoClientId = config.require("awsCognitoClientId");
-const awsCognitoClientSecret = config.requireSecret("awsCognitoClientSecret");
-const awsCognitoIssuerUrl = config.requireSecret("awsCognitoIssuerUrl");
-const awsUserAccessKeyId = config.requireSecret("awsUserAccessKeyId");
-const awsUserAccessKeySecret = config.requireSecret("awsUserAccessKeySecret");
 const myFirstName = config.require("myFirstName");
 const nextAuthSecret = config.requireSecret("nextAuthSecret");
 const gitRepositoryUrl = config.require("gitRepositoryUrl");
@@ -19,6 +14,9 @@ const githubPersonalAccessToken = config.requireSecret(
 const myName = config.require("myName");
 const myCompanyEmail = config.require("myCompanyEmail");
 const awsAccountId = config.require("awsAccountId");
+const baseUrlLocal = config.require("baseUrlLocal");
+const baseUrlRemote = config.require("baseUrlRemote");
+const userpoolAdminEmail = config.require("userpoolAdminEmail");
 const region = awsConfig.require("region");
 
 const stack = pulumi.getStack();
@@ -76,6 +74,47 @@ const dynamoDbTable = new aws.dynamodb.Table(
     streamViewType: "NEW_IMAGE",
   }
 );
+
+// ####################### AWS COGNITO #######################
+const userpool = new aws.cognito.UserPool(
+  `${project}-${stack}-${region}-userpool`
+);
+
+const userpoolClient = new aws.cognito.UserPoolClient(
+  `${project}-${stack}-${region}-nextjs-admin-login`,
+  {
+    userPoolId: userpool.id,
+    allowedOauthFlows: ["code"],
+    generateSecret: true,
+    allowedOauthFlowsUserPoolClient: true,
+    allowedOauthScopes: ["email", "openid", "profile"],
+    callbackUrls: [
+      `${baseUrlLocal}/api/auth/callback/cognito`,
+      `${baseUrlRemote}/api/auth/callback/cognito`,
+    ],
+    logoutUrls: [], // TODO
+    supportedIdentityProviders: ["COGNITO"],
+    preventUserExistenceErrors: "ENABLED",
+  }
+);
+
+const userpoolDomain = new aws.cognito.UserPoolDomain(
+  `${project}-${stack}-${region}-domain`,
+  {
+    userPoolId: userpool.id,
+    domain: `${project}-${stack}-${region}`,
+  }
+);
+
+const userpoolAdminUser = new aws.cognito.User("admin", {
+  userPoolId: userpool.id,
+  username: userpoolAdminEmail,
+  attributes: {
+    email: userpoolAdminEmail,
+  },
+});
+
+// ####################### END AWS COGNITO #######################
 
 const nextAppServiceRole = new aws.iam.Role("nextAppServiceRole", {
   assumeRolePolicy: aws.iam.assumeRolePolicyForPrincipal({
@@ -137,9 +176,9 @@ const nextApp = new aws.amplify.App(`${project}-${stack}-${region}-app`, {
   platform: "WEB_COMPUTE",
   environmentVariables: {
     BACKEND_BASE_URL: "http://localhost:3001", // this is not used anymore. remove it.
-    MY_AWS_COGNITO_CLIENT_ID: awsCognitoClientId,
-    MY_AWS_COGNITO_CLIENT_SECRET: awsCognitoClientSecret,
-    MY_AWS_COGNITO_ISSUER: awsCognitoIssuerUrl,
+    MY_AWS_COGNITO_CLIENT_ID: userpoolClient.id,
+    MY_AWS_COGNITO_CLIENT_SECRET: userpoolClient.clientSecret,
+    MY_AWS_COGNITO_ISSUER: pulumi.interpolate`https://cognito-idp.${region}.amazonaws.com/${userpool.id}`,
     MY_AWS_DYNAMODB_TABLE_NAME: dynamoDbTable.name,
     MY_AWS_REGION: region,
     MY_AWS_USER_ACCESS_KEY_ID: pulumi.interpolate`${nextjsToDynamoDBUserAccessKey.id}`,
