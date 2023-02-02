@@ -1,4 +1,6 @@
 version: 1
+# see https://docs.aws.amazon.com/amplify/latest/userguide/monorepo-configuration.html
+# only this way I was able to get nextjs working in the new monorepo setup. Also needed to set AMPLIFY_MONOREPO_APP_ROOT to the same value as appRoot, since I already had the app deployed in non-monorepo style before.
 applications:
   - appRoot: app
     frontend:
