@@ -189,6 +189,7 @@ const nextApp = new aws.amplify.App(`${project}-${stack}-${region}-app`, {
     NEXT_PUBLIC_MY_COMPANY_EMAIL: myCompanyEmail,
     NEXT_PUBLIC_MY_FIRST_NAME: myFirstName,
     NEXT_PUBLIC_MY_NAME: myName,
+    AMPLIFY_MONOREPO_APP_ROOT: "app",
   },
   customRules: [
     {
