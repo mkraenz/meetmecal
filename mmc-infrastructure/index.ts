@@ -16,12 +16,16 @@ const myName = config.require("myName");
 const myCompanyEmail = config.require("myCompanyEmail");
 const awsAccountId = config.require("awsAccountId");
 const baseUrlLocal = config.require("baseUrlLocal");
-const baseUrlRemote = config.require("baseUrlRemote");
 const userpoolAdminEmail = config.require("userpoolAdminEmail");
+const domainName = config.require("domainName");
 const region = awsConfig.require("region");
 
 const stack = pulumi.getStack();
 const project = pulumi.getProject();
+
+const subdomain = "meet";
+const fqdn = `${subdomain}.${domainName}`;
+const baseUrlRemote = `https://${fqdn}`;
 
 const dynamoDbTable = new aws.dynamodb.Table(
   `${project}-${stack}-${region}-db`,
@@ -80,7 +84,7 @@ const cognitoIP = new CognitoIdentityProvider(`cognito`, {
   adminEmail: userpoolAdminEmail,
   adminLoginOauthClientCallbackUrls: [
     `${baseUrlLocal}/api/auth/callback/cognito`,
-    `${baseUrlRemote}/api/auth/callback/cognito`,
+    `https://${fqdn}/api/auth/callback/cognito`,
   ],
   namePrefix: `${project}-${stack}-${region}`,
   region,
@@ -188,6 +192,19 @@ const nextAppMainBranch = new aws.amplify.Branch("main", {
   enableAutoBuild: true,
 });
 
+new aws.amplify.DomainAssociation("domain", {
+  appId: nextApp.id,
+  domainName,
+  subDomains: [
+    {
+      branchName: nextAppMainBranch.branchName,
+      prefix: subdomain,
+    },
+  ],
+  waitForVerification: true,
+});
+
 export const tableName = dynamoDbTable.name;
 
-export const nextAppDomain = nextApp.defaultDomain;
+export const amplifyNextAppId = nextApp.id;
+export const amplifyNextAppMainBranchName = nextAppMainBranch.branchName;

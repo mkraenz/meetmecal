@@ -2,7 +2,7 @@ config:
   aws:region: us-east-1
   mmc-infrastructure:awsAccountId: "756399734264"
   mmc-infrastructure:baseUrlLocal: http://localhost:3000
-  mmc-infrastructure:baseUrlRemote: https://main.d31kuqw4mc37w6.amplifyapp.com
+  mmc-infrastructure:domainName: kraenz.eu
   mmc-infrastructure:gitRepositoryUrl: https://github.com/mkraenz/meetmecal
   mmc-infrastructure:githubPersonalAccessToken:
     secure: AAABANd+FH5bF7U8fiRvfiygIUdqaMOUcWAWaxQvrANoPovL0o2G5TC4fA1QyyxSHAQ6q5E+4NsqjAAji3eKqvLCsgVja3bo
