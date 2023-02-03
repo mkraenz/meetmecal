@@ -1,6 +1,7 @@
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
 import { readFileSync } from "fs";
+import { CognitoIdentityProvider } from "./components/CognitoIdentityProvider";
 import { getFrontendServiceRolePolicy } from "./frontendServiceRolePolicy";
 
 const config = new pulumi.Config();
@@ -75,43 +76,14 @@ const dynamoDbTable = new aws.dynamodb.Table(
   }
 );
 
-// ####################### AWS COGNITO #######################
-const userpool = new aws.cognito.UserPool(
-  `${project}-${stack}-${region}-userpool`
-);
-
-const userpoolClient = new aws.cognito.UserPoolClient(
-  `${project}-${stack}-${region}-nextjs-admin-login`,
-  {
-    userPoolId: userpool.id,
-    allowedOauthFlows: ["code"],
-    generateSecret: true,
-    allowedOauthFlowsUserPoolClient: true,
-    allowedOauthScopes: ["email", "openid", "profile"],
-    callbackUrls: [
-      `${baseUrlLocal}/api/auth/callback/cognito`,
-      `${baseUrlRemote}/api/auth/callback/cognito`,
-    ],
-    logoutUrls: [], // TODO
-    supportedIdentityProviders: ["COGNITO"],
-    preventUserExistenceErrors: "ENABLED",
-  }
-);
-
-const userpoolDomain = new aws.cognito.UserPoolDomain(
-  `${project}-${stack}-${region}-domain`,
-  {
-    userPoolId: userpool.id,
-    domain: `${project}-${stack}-${region}`,
-  }
-);
-
-const userpoolAdminUser = new aws.cognito.User("admin", {
-  userPoolId: userpool.id,
-  username: userpoolAdminEmail,
-  attributes: {
-    email: userpoolAdminEmail,
-  },
+const cognitoIP = new CognitoIdentityProvider(`cognito`, {
+  adminEmail: userpoolAdminEmail,
+  adminLoginOauthClientCallbackUrls: [
+    `${baseUrlLocal}/api/auth/callback/cognito`,
+    `${baseUrlRemote}/api/auth/callback/cognito`,
+  ],
+  namePrefix: `${project}-${stack}-${region}`,
+  region,
 });
 
 // ####################### END AWS COGNITO #######################
@@ -176,16 +148,16 @@ const nextApp = new aws.amplify.App(`${project}-${stack}-${region}-app`, {
   platform: "WEB_COMPUTE",
   environmentVariables: {
     BACKEND_BASE_URL: "http://localhost:3001", // this is not used anymore. remove it.
-    MY_AWS_COGNITO_CLIENT_ID: userpoolClient.id,
-    MY_AWS_COGNITO_CLIENT_SECRET: userpoolClient.clientSecret,
-    MY_AWS_COGNITO_ISSUER: pulumi.interpolate`https://cognito-idp.${region}.amazonaws.com/${userpool.id}`,
+    MY_AWS_COGNITO_CLIENT_ID: cognitoIP.userpoolClient.id,
+    MY_AWS_COGNITO_CLIENT_SECRET: cognitoIP.userpoolClient.clientSecret,
+    MY_AWS_COGNITO_ISSUER: pulumi.interpolate`https://cognito-idp.${region}.amazonaws.com/${cognitoIP.userpool.id}`,
     MY_AWS_DYNAMODB_TABLE_NAME: dynamoDbTable.name,
     MY_AWS_REGION: region,
     MY_AWS_USER_ACCESS_KEY_ID: pulumi.interpolate`${nextjsToDynamoDBUserAccessKey.id}`,
     MY_AWS_USER_ACCESS_KEY_SECRET: pulumi.interpolate`${nextjsToDynamoDBUserAccessKey.secret}`,
     MY_FIRST_NAME: myFirstName,
     NEXTAUTH_SECRET: nextAuthSecret,
-    NEXTAUTH_URL: "http://localhost:3000",
+    NEXTAUTH_URL: baseUrlRemote,
     NEXT_PUBLIC_MY_COMPANY_EMAIL: myCompanyEmail,
     NEXT_PUBLIC_MY_FIRST_NAME: myFirstName,
     NEXT_PUBLIC_MY_NAME: myName,
