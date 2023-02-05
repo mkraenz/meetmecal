@@ -1,8 +1,8 @@
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
 import { readFileSync } from "fs";
-import { CognitoIdentityProvider } from "./components/CognitoIdentityProvider";
 import { getFrontendServiceRolePolicy } from "./frontendServiceRolePolicy";
+import { createCognitoIdentityProvider } from "./resources/CognitoIdentityProvider";
 
 const config = new pulumi.Config();
 const awsConfig = new pulumi.Config("aws");
@@ -80,17 +80,14 @@ const dynamoDbTable = new aws.dynamodb.Table(
   }
 );
 
-const cognitoIP = new CognitoIdentityProvider(`cognito`, {
+const cognitoIP = createCognitoIdentityProvider({
   adminEmail: userpoolAdminEmail,
   adminLoginOauthClientCallbackUrls: [
     `${baseUrlLocal}/api/auth/callback/cognito`,
     `https://${fqdn}/api/auth/callback/cognito`,
   ],
-  namePrefix: `${project}-${stack}-${region}`,
-  region,
+  domainName: `meetmecal-${stack}-${region}`,
 });
-
-// ####################### END AWS COGNITO #######################
 
 const nextAppServiceRole = new aws.iam.Role("nextAppServiceRole", {
   assumeRolePolicy: aws.iam.assumeRolePolicyForPrincipal({
@@ -110,7 +107,7 @@ const nextjsToDynamoDBUser = new aws.iam.User(
   `${project}-${stack}-${region}-nextjs-to-dynamodb`
 );
 const nextjsToDynamoDBUserAccessKey = new aws.iam.AccessKey(
-  "${project}-${stack}-${region}-NextjsToDynamoDBUserAccessKey",
+  "NextjsToDynamoDBUserAccessKey",
   { user: nextjsToDynamoDBUser.name }
 );
 
@@ -208,3 +205,6 @@ export const tableName = dynamoDbTable.name;
 
 export const amplifyNextAppId = nextApp.id;
 export const amplifyNextAppMainBranchName = nextAppMainBranch.branchName;
+export const cognitoIssuerUrl = pulumi.interpolate`https://cognito-idp.${region}.amazonaws.com/${cognitoIP.userpool.id}`;
+
+export const NOTE = "you may need to redeploy the amplify app. See README.md";
