@@ -4,4 +4,4 @@ short: meetmecal, mmc
 
 ## Architecture
 
-[![Architecture](https://raw.githubusercontent.com/mkraenz/meetmecal/main/docs/mmc-architecture.png)](https://raw.githubusercontent.com/mkraenz/meetmecal/main/docs/mmc-architecture.png)
+[![Architecture](https://raw.githubusercontent.com/mkraenz/meetmecal/main/docs/mmc-architecture-diagram.png)](https://raw.githubusercontent.com/mkraenz/meetmecal/main/docs/mmc-architecture-diagram.png)
