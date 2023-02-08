@@ -1,4 +1,10 @@
-import { Skeleton, Stack, useDisclosure, useToken } from "@chakra-ui/react";
+import {
+  Button,
+  Skeleton,
+  Stack,
+  useDisclosure,
+  useToken,
+} from "@chakra-ui/react";
 import type {
   DateSelectArg,
   EventClickArg,
@@ -35,6 +41,7 @@ const CalendarAdmin: NextPage<Props> = (props) => {
   const availabilities = api.availabilitiesAdmin.getAll.useQuery();
   const bookings = api.bookingsAdmin.getAll.useQuery();
   const removeAvailability = api.availabilitiesAdmin.remove.useMutation();
+  const createMeetingTypes = api.admin.createExampleMeetings.useMutation();
 
   const deleteAvailability = () => {
     const end = selectedEvent?.end;
@@ -268,6 +275,12 @@ const CalendarAdmin: NextPage<Props> = (props) => {
           availabilityDeleteIsLoading={removeAvailability.isLoading}
         />
       </Stack>
+      <Button
+        onClick={() => createMeetingTypes.mutate()}
+        isLoading={createMeetingTypes.isLoading}
+      >
+        Seed Meeting Types
+      </Button>
     </AdminLayout>
   );
 };

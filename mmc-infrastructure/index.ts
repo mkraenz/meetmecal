@@ -1,8 +1,8 @@
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
 import { readFileSync } from "fs";
-import { getFrontendServiceRolePolicy } from "./frontendServiceRolePolicy";
 import { createCognitoIdentityProvider } from "./resources/CognitoIdentityProvider";
+import { getFrontendServiceRolePolicy } from "./src/frontendServiceRolePolicy";
 
 const config = new pulumi.Config();
 const awsConfig = new pulumi.Config("aws");
