@@ -206,5 +206,25 @@ export const tableName = dynamoDbTable.name;
 export const amplifyNextAppId = nextApp.id;
 export const amplifyNextAppMainBranchName = nextAppMainBranch.branchName;
 export const cognitoIssuerUrl = pulumi.interpolate`https://cognito-idp.${region}.amazonaws.com/${cognitoIP.userpool.id}`;
+export const nextjsToDynamoDBUserAccessKeySecret = nextjsToDynamoDBUserAccessKey.secret;
+export const nextjsToDynamoDBUserAccessKeyId = nextjsToDynamoDBUserAccessKey.id;
+export const localEnvFile = pulumi.interpolate`NEXTAUTH_SECRET=${nextAuthSecret}
+NEXTAUTH_URL=http://localhost:3000
+
+BACKEND_BASE_URL=http://localhost:3001
+MY_FIRST_NAME=Jane
+
+NEXT_PUBLIC_MY_COMPANY_EMAIL=hello@example.com
+NEXT_PUBLIC_MY_NAME=Jane Doe
+NEXT_PUBLIC_MY_FIRST_NAME=Jane
+
+MY_AWS_USER_ACCESS_KEY_ID=${nextjsToDynamoDBUserAccessKey.id}
+MY_AWS_USER_ACCESS_KEY_SECRET=${nextjsToDynamoDBUserAccessKey.secret}
+MY_AWS_DYNAMODB_TABLE_NAME=${tableName}
+MY_AWS_REGION=${region}
+MY_AWS_COGNITO_CLIENT_ID=${cognitoIP.userpoolClient.name}
+MY_AWS_COGNITO_CLIENT_SECRET=${cognitoIP.userpoolClient.clientSecret}
+MY_AWS_COGNITO_ISSUER=${cognitoIssuerUrl}
+`
 
 export const NOTE = "you may need to redeploy the amplify app. See README.md";
