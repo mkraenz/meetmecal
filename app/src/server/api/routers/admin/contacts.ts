@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { ContactDb, TokenDb } from "../../../db";
-import { getRandomId } from "../../../utils";
+import { ContactDb, TokenDb, twoWeeksInSecs } from "../../../db";
+import { dateToSeconds, getRandomId } from "../../../utils";
 
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 
@@ -34,9 +34,12 @@ export const contactsAdminRouter = createTRPCRouter({
         name: input.name,
         email: input.email,
       });
+      const exp = dateToSeconds(new Date()) + twoWeeksInSecs;
       const token = await TokenDb.create({
         contactId: contact.id,
         value: getRandomId(60),
+        exp,
+        ttl: exp,
       });
       return { contact, token };
     }),

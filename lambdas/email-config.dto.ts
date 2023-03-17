@@ -1,5 +1,6 @@
 import { IsBoolean, IsEmail, IsInt, IsString, validate } from "class-validator";
 
+// TODO convert to zod
 export class EmailConfig {
   @IsString()
   public readonly host: string;
