@@ -52,7 +52,7 @@ export const bookingRouter = createTRPCRouter({
       rawAvailabilities,
       existingBookings
     );
-    const slotIsInavailable = availabilities.some((a) => slot.overlaps(a));
+    const slotIsInavailable = availabilities.every((a) => !slot.overlaps(a));
     if (slotIsInavailable) {
       console.warn(
         "inavailable slot being booked. This shouldn't happen with normal app usage (unless we have a bug e.g. in calculating actual availabilities)",

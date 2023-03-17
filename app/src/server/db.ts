@@ -16,7 +16,7 @@ const client = new Dynamo({
 
 const ISODateString = String; // Only for more expressive code
 const ISODateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/;
-const twoWeeksInSecs = 1209600;
+export const twoWeeksInSecs = 1209600;
 
 /**
  * @see Schema https://doc.onetable.io/api/table/schemas/attributes/
@@ -121,13 +121,11 @@ const meetMeCalOneSchema = {
       ttl: {
         type: Number,
         ttl: true, // @see https://aws.amazon.com/premiumsupport/knowledge-center/ttl-dynamodb/
-        default: () => dateToSeconds(new Date()) + twoWeeksInSecs,
         required: true,
       },
       // Number of seconds since epoch, following JWT exp field https://www.rfc-editor.org/rfc/rfc7519#section-2 4.1.4.
       exp: {
         type: Number,
-        default: () => dateToSeconds(new Date()) + twoWeeksInSecs,
         required: true,
       },
       value: {

@@ -1,0 +1,13 @@
+[
+  {
+    "dynamodb": {
+      "NewImage": {
+        "pk": "Booking",
+        "contact": { "name": "John Doe", "email": "hello@example.com" },
+        "start": 1679039435882,
+        "end": 1679039435882,
+        "meetingType": { "displayName": "5 min meeting" }
+      }
+    }
+  }
+]

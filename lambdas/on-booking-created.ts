@@ -40,7 +40,7 @@ export const lambdaHandler = async (
     const emailToMe = getEmail(booking, cfg, cfg.myEmail);
     const sendEmailToMeResult = await mailer.sendMail(emailToMe);
     console.log({ msg: "email sent", sendEmailToMeResult });
-  } catch (err: unknown) {
+  } catch (err) {
     console.error(err);
   }
 };

@@ -1,4 +1,5 @@
 import * as aws from "@pulumi/aws";
+import * as awsNative from "@pulumi/aws-native";
 import * as pulumi from "@pulumi/pulumi";
 import { readFileSync } from "fs";
 import { createCognitoIdentityProvider } from "./resources/CognitoIdentityProvider";
@@ -18,6 +19,19 @@ const awsAccountId = config.require("awsAccountId");
 const baseUrlLocal = config.require("baseUrlLocal");
 const userpoolAdminEmail = config.require("userpoolAdminEmail");
 const domainName = config.require("domainName");
+const bookingConfirmationMailSmtpHost = config.requireSecret(
+  "bookingConfirmationMailSmtpHost"
+);
+const bookingConfirmationMailSmtpUsername = config.requireSecret(
+  "bookingConfirmationMailSmtpUsername"
+);
+const bookingConfirmationMailSmtpPassword = config.requireSecret(
+  "bookingConfirmationMailSmtpPassword"
+);
+const bookingConfirmationMailSmtpPort =
+  config.getNumber("bookingConfirmationMailSmtpPort", { min: 1, max: 65535 }) ??
+  465;
+
 const region = awsConfig.require("region");
 
 const stack = pulumi.getStack();
@@ -79,6 +93,150 @@ const dynamoDbTable = new aws.dynamodb.Table(
     streamViewType: "NEW_IMAGE",
   }
 );
+
+const bookingCreatedFnLogGroup = new aws.cloudwatch.LogGroup(
+  "booking-created-fn",
+  { retentionInDays: 3 }
+);
+const bookingCreatedFnLoggingPolicyDocument = aws.iam.getPolicyDocument({
+  statements: [
+    {
+      effect: "Allow",
+      actions: [
+        "logs:CreateLogGroup", // this can pbly be removed
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+      ],
+      // TODO use arn:aws:logs:<region>:<account-id>:log-group:<log_group_name>:*
+      resources: ["arn:aws:logs:*:*:*"],
+    },
+  ],
+});
+const bookingCreatedFnLoggingPolicy = new aws.iam.Policy("booking-created-fn", {
+  path: "/",
+  description: "Logging policy for booking created lambda function",
+  policy: bookingCreatedFnLoggingPolicyDocument.then((doc) => doc.json),
+});
+
+const bookingCreatedFnRole = new aws.iam.Role("booking-created-fn", {
+  assumeRolePolicy: aws.iam.assumeRolePolicyForPrincipal({
+    Service: "lambda.amazonaws.com",
+  }),
+});
+const bookingCreatedFnPolicyAttachment = new aws.iam.RolePolicyAttachment(
+  "booking-created-fn",
+  {
+    role: bookingCreatedFnRole.name,
+    policyArn: bookingCreatedFnLoggingPolicy.arn,
+  }
+);
+
+const bookingCreatedFn = new aws.lambda.Function("booking-created", {
+  code: new pulumi.asset.AssetArchive({
+    ".": new pulumi.asset.FileArchive("../lambdas/dist/on-booking-created"),
+  }),
+  handler: "index.lambdaHandler",
+  runtime: "nodejs16.x",
+  architectures: ["x86_64"],
+  environment: {
+    variables: {
+      SMTP_HOST: bookingConfirmationMailSmtpHost,
+      SMTP_USERNAME: bookingConfirmationMailSmtpUsername,
+      SMTP_PASSWORD: bookingConfirmationMailSmtpPassword,
+      SMTP_PORT: bookingConfirmationMailSmtpPort.toString(),
+      USE_SSL: "true",
+      MY_EMAIL_ADDRESS: myCompanyEmail,
+      FROM_ADDRESS: myCompanyEmail,
+      MY_NAME: myName,
+    },
+  },
+  description:
+    "Email notifications sending via Lambda triggered by DynamoDB Stream events on booking creation (with EventBridge Pipe as transport)",
+  role: bookingCreatedFnRole.arn,
+});
+
+const pipeRole = new awsNative.iam.Role("booking-created-pipe", {
+  assumeRolePolicyDocument: aws.iam.assumeRolePolicyForPrincipal({
+    Service: "pipes.amazonaws.com",
+  }),
+  policies: [
+    {
+      policyName: `${project}-${region}-${stack}-source-policy`,
+      policyDocument: dynamoDbTable.streamArn.apply((streamArn) =>
+        aws.iam
+          .getPolicyDocument({
+            version: "2012-10-17",
+            statements: [
+              {
+                effect: "Allow",
+                actions: [
+                  "dynamodb:DescribeStream",
+                  "dynamodb:GetRecords",
+                  "dynamodb:GetShardIterator",
+                  "dynamodb:ListStreams",
+                ],
+                resources: [streamArn],
+              },
+            ],
+          })
+          .then((p) => p.json)
+      ),
+    },
+    {
+      policyName: `${project}-${region}-${stack}-target-policy`,
+      policyDocument: bookingCreatedFn.arn.apply((bookingCreatedFnArn) =>
+        aws.iam
+          .getPolicyDocument({
+            version: "2012-10-17",
+            statements: [
+              {
+                effect: "Allow",
+                actions: ["lambda:InvokeFunction"],
+                resources: [bookingCreatedFnArn],
+              },
+            ],
+          })
+          .then((p) => p.json)
+      ),
+    },
+  ],
+});
+
+/** EventBridge Pipe to listen to create-item events in DDB table and trigger bookingCreated lambda function */
+const bookingCreatedPipe = new awsNative.pipes.Pipe("booking-created", {
+  description:
+    "Pipes to connect to DDB stream listening only for creation changes",
+  roleArn: pipeRole.arn,
+  target: bookingCreatedFn.arn,
+  targetParameters: {
+    lambdaFunctionParameters: {
+      invocationType: "FIRE_AND_FORGET",
+    },
+  },
+  source: dynamoDbTable.streamArn,
+  sourceParameters: {
+    filterCriteria: {
+      filters: [
+        {
+          // pattern derived from https://docs.aws.amazon.com/lambda/latest/dg/with-ddb-example.html
+          // pk = "booking" comes from db.ts
+          // Note: in eventbridge we must use `"S": ["booking"]` for equality match even though we want to match for `"S": "booking"`. See https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html
+          // Can we use multiline here? In SAM it was not possible for some reason.
+          pattern:
+            '{"eventName":["INSERT"],"dynamodb":{"NewImage":{"pk":{"S":["booking"]}}}}',
+        },
+      ],
+    },
+    dynamoDBStreamParameters: {
+      startingPosition: "LATEST",
+      batchSize: 1,
+      // TODO add dlq
+      // deadLetterConfig: {
+      //   arn: ''
+      // }
+    },
+  },
+});
 
 const cognitoIP = createCognitoIdentityProvider({
   adminEmail: userpoolAdminEmail,
@@ -189,6 +347,14 @@ const nextAppMainBranch = new aws.amplify.Branch("main", {
   enableAutoBuild: true,
 });
 
+const nextAppDevBranch = new aws.amplify.Branch("dev", {
+  appId: nextApp.id,
+  branchName: "dev",
+  framework: "Next.js - SSR",
+  stage: "DEVELOPMENT",
+  enableAutoBuild: true,
+});
+
 new aws.amplify.DomainAssociation("domain", {
   appId: nextApp.id,
   domainName,
@@ -206,8 +372,6 @@ export const tableName = dynamoDbTable.name;
 export const amplifyNextAppId = nextApp.id;
 export const amplifyNextAppMainBranchName = nextAppMainBranch.branchName;
 export const cognitoIssuerUrl = pulumi.interpolate`https://cognito-idp.${region}.amazonaws.com/${cognitoIP.userpool.id}`;
-export const nextjsToDynamoDBUserAccessKeySecret = nextjsToDynamoDBUserAccessKey.secret;
-export const nextjsToDynamoDBUserAccessKeyId = nextjsToDynamoDBUserAccessKey.id;
 export const localEnvFile = pulumi.interpolate`NEXTAUTH_SECRET=${nextAuthSecret}
 NEXTAUTH_URL=http://localhost:3000
 
@@ -222,9 +386,9 @@ MY_AWS_USER_ACCESS_KEY_ID=${nextjsToDynamoDBUserAccessKey.id}
 MY_AWS_USER_ACCESS_KEY_SECRET=${nextjsToDynamoDBUserAccessKey.secret}
 MY_AWS_DYNAMODB_TABLE_NAME=${tableName}
 MY_AWS_REGION=${region}
-MY_AWS_COGNITO_CLIENT_ID=${cognitoIP.userpoolClient.name}
+MY_AWS_COGNITO_CLIENT_ID=${cognitoIP.userpoolClient.id}
 MY_AWS_COGNITO_CLIENT_SECRET=${cognitoIP.userpoolClient.clientSecret}
 MY_AWS_COGNITO_ISSUER=${cognitoIssuerUrl}
-`
+`;
 
 export const NOTE = "you may need to redeploy the amplify app. See README.md";
