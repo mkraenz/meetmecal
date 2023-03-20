@@ -347,14 +347,6 @@ const nextAppMainBranch = new aws.amplify.Branch("main", {
   enableAutoBuild: true,
 });
 
-const nextAppDevBranch = new aws.amplify.Branch("dev", {
-  appId: nextApp.id,
-  branchName: "dev",
-  framework: "Next.js - SSR",
-  stage: "DEVELOPMENT",
-  enableAutoBuild: true,
-});
-
 new aws.amplify.DomainAssociation("domain", {
   appId: nextApp.id,
   domainName,
