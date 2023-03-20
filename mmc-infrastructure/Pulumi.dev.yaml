@@ -1,16 +1,15 @@
 config:
+  aws-native:region: us-east-1
   aws:region: us-east-1
   mmc-infrastructure:awsAccountId: "756399734264"
   mmc-infrastructure:baseUrlLocal: http://localhost:3000
   mmc-infrastructure:domainName: kraenz.eu
   mmc-infrastructure:gitRepositoryUrl: https://github.com/mkraenz/meetmecal
-  mmc-infrastructure:githubPersonalAccessToken:
-    secure: AAABANd+FH5bF7U8fiRvfiygIUdqaMOUcWAWaxQvrANoPovL0o2G5TC4fA1QyyxSHAQ6q5E+4NsqjAAji3eKqvLCsgVja3bo
   mmc-infrastructure:myCompanyEmail:
     secure: AAABACmqLGrNissKveh7dczc8oTi6Cc31yc1TfGB8tOHbxUnFxG9zHfFUE+fIkokP1w=
   mmc-infrastructure:myFirstName: Mirco
+  mmc-infrastructure:myLastName: Kraenz
   mmc-infrastructure:myName: Mirco Kraenz
-  mmc-infrastructure:nextAuthSecret:
-    secure: AAABAJTSOWR2RCCytwsp++vXKND2HTsgibrIAu+XY8H+zP7VyzrBOjr9fifWTIJLalHajpO3xbc36yd5HDtDQSxt3TvtuQ11I2tDzw==
+  mmc-infrastructure:secretsStackName: mkraenz/mmc-secrets/dev
   mmc-infrastructure:userpoolAdminEmail:
     secure: AAABAASWdTXohwEr8iT/rtGQy486XuOfiJ9RnQjo2zzFlqokOttcNUeH7zxVL3UYSglOsAyMcCvcr9U=

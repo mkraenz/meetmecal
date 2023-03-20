@@ -8,26 +8,31 @@ import { getFrontendServiceRolePolicy } from "./src/frontendServiceRolePolicy";
 const config = new pulumi.Config();
 const awsConfig = new pulumi.Config("aws");
 const myFirstName = config.require("myFirstName");
-const nextAuthSecret = config.requireSecret("nextAuthSecret");
 const gitRepositoryUrl = config.require("gitRepositoryUrl");
-const githubPersonalAccessToken = config.requireSecret(
-  "githubPersonalAccessToken"
-);
 const myName = config.require("myName");
 const myCompanyEmail = config.require("myCompanyEmail");
 const awsAccountId = config.require("awsAccountId");
 const baseUrlLocal = config.require("baseUrlLocal");
 const userpoolAdminEmail = config.require("userpoolAdminEmail");
 const domainName = config.require("domainName");
-const bookingConfirmationMailSmtpHost = config.requireSecret(
-  "bookingConfirmationMailSmtpHost"
+
+const secretsStackName = config.require("secretsStackName"); // format: myorg/project/stack
+const secrets = new pulumi.StackReference(secretsStackName);
+const bookingConfirmationMailSmtpHost = secrets.getOutput(
+  "mmcInfrastructureBookingConfirmationMailSmtpHost"
 );
-const bookingConfirmationMailSmtpUsername = config.requireSecret(
-  "bookingConfirmationMailSmtpUsername"
+const bookingConfirmationMailSmtpUsername = secrets.getOutput(
+  "mmcInfrastructureBookingConfirmationMailSmtpUsername"
 );
-const bookingConfirmationMailSmtpPassword = config.requireSecret(
-  "bookingConfirmationMailSmtpPassword"
+const bookingConfirmationMailSmtpPassword = secrets.getOutput(
+  "mmcInfrastructureBookingConfirmationMailSmtpPassword"
 );
+const nextAuthSecret = secrets.getOutput("mmcInfrastructureNextAuthSecret");
+
+export const githubPersonalAccessToken = secrets.getOutput(
+  "mmcInfrastructureGithubPersonalAccessToken"
+);
+
 const bookingConfirmationMailSmtpPort =
   config.getNumber("bookingConfirmationMailSmtpPort", { min: 1, max: 65535 }) ??
   465;
@@ -335,7 +340,7 @@ const nextApp = new aws.amplify.App(`${project}-${stack}-${region}-app`, {
   // https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/amplify_app Fixing the following error:
   // "BadRequestException: You should at least provide one valid token" because of authentication issues. See the section "Repository with Tokens" below.
   // https://docs.aws.amazon.com/amplify/latest/userguide/setting-up-GitHub-access.html amplify needs `admin:repo_hook` scope
-  accessToken: githubPersonalAccessToken, // current token expires on about 2023-03-01
+  accessToken: githubPersonalAccessToken, // next token expires on Sun, Jun 18 2023
   repository: gitRepositoryUrl,
 });
 
